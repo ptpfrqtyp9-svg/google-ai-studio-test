@@ -57,6 +57,16 @@ public struct ContentView: View {
                     .ignoresSafeArea(.all, edges: .top)
             }
             
+            // Right-Side Toolbar (Brush Kit, Eraser, Undo/Redo, Export) — anchored to the trailing edge, vertically centered
+            if appMode == .freeDraw {
+                BottomToolbarView(
+                    state: state,
+                    isTargetPickerPresented: $isTargetPickerPresented,
+                    isExportPresented: $isExportPresented
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+            }
+
             // Top Navigation Bar
             VStack {
                 HStack(spacing: 12) {
@@ -147,13 +157,6 @@ public struct ContentView: View {
                 .padding(.top, 10)
                 
                 Spacer()
-                
-                // Bottom Toolbar with Brush Kit, Eraser, Undo/Redo, Quick Eye, and Import Trigger
-                BottomToolbarView(
-                    state: state,
-                    isTargetPickerPresented: $isTargetPickerPresented,
-                    isExportPresented: $isExportPresented
-                )
             }
         }
         .onAppear {
