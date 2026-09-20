@@ -188,71 +188,111 @@ public struct ContentView: View {
 private struct ColorByNumberView: View {
     @ObservedObject var state: TracingAppState
     let openLibrary: () -> Void
-    @State private var showNext = false
+    @State private var selectedNumber = 1
+    @State private var filledCells: Set<Int> = []
+    private let grid: [[Int?]] = [
+        [nil, nil, nil, 1, 1, 1, nil, nil, 1, 1, nil],
+        [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
+        [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
+        [1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1],
+        [1, 1, 1, 2, 3, 2, 2, 3, 2, 1, 1],
+        [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil],
+        [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil],
+        [nil, nil, 1, 3, 3, 3, 3, 1, 1, nil, nil],
+        [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
+        [nil, nil, nil, nil, nil, 3, 3, nil, nil, nil, nil]
+    ]
+    private let colors: [Color] = [Color(red: 0.16, green: 0.70, blue: 0.91), Color(red: 1.0, green: 0.79, blue: 0.15), Color(red: 0.18, green: 0.18, blue: 0.21)]
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Image("coloring-game-reference")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
+                Color(red: 0.98, green: 0.97, blue: 0.94).ignoresSafeArea()
+                DottedPaperBackground()
+                VStack(spacing: 14) {
+                    HStack {
+                        Button(action: openLibrary) { Label("Back to Free Draw", systemImage: "chevron.left") }
+                        Spacer()
+                        VStack(spacing: 3) {
+                            Text("Buzzy Bee").font(.system(size: 22, weight: .black, design: .rounded))
+                            Text("Animals & Nature • 5% Done").font(.system(size: 13, weight: .bold)).foregroundColor(.cyan)
+                        }
+                        Spacer()
+                        Button(action: { filledCells.removeAll() }) { Label("Clear", systemImage: "arrow.counterclockwise") }
+                    }
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundColor(studioInk.opacity(0.74))
+                    .padding(.horizontal, 28)
+                    .padding(.top, 54)
 
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button {
-                            openLibrary()
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 30, weight: .heavy))
-                                .foregroundColor(Color(red: 1, green: 0.96, blue: 0.72))
-                                .frame(width: 88, height: 88)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 28)
-                                        .fill(Color(red: 0.98, green: 0.38, blue: 0.28))
-                                        .shadow(color: .black.opacity(0.2), radius: 5, y: 4)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 28)
-                                        .stroke(Color(red: 0.78, green: 0.22, blue: 0.16), lineWidth: 5)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 18)
-                        .padding(.trailing, 22)
-                    }
-                    Spacer()
-                    HStack {
-                        Button {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                showNext.toggle()
+                    HStack(alignment: .top, spacing: 28) {
+                        VStack(spacing: 16) {
+                            guidePanel
+                            numberPicker
+                            HStack(spacing: 12) {
+                                utilityButton("tablecells", title: "Grid")
+                                utilityButton("lightbulb", title: "Hint")
                             }
-                        } label: {
-                            Image(systemName: showNext ? "checkmark" : "arrow.right")
-                                .font(.system(size: 30, weight: .heavy))
-                                .foregroundColor(Color(red: 1, green: 0.96, blue: 0.72))
-                                .frame(width: 88, height: 88)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 28)
-                                        .fill(Color(red: 0.95, green: 0.19, blue: 0.14))
-                                        .shadow(color: .black.opacity(0.22), radius: 5, y: 4)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 28)
-                                        .stroke(Color(red: 0.70, green: 0.12, blue: 0.09), lineWidth: 5)
-                                )
                         }
-                        .buttonStyle(.plain)
-                        .padding(.leading, 22)
-                        .padding(.bottom, 18)
-                        Spacer()
+                        board
                     }
+                    .frame(maxWidth: 1100, maxHeight: .infinity, alignment: .center)
+                    Spacer(minLength: 10)
                 }
             }
-            .ignoresSafeArea()
         }
+    }
+
+    private var guidePanel: some View {
+        VStack(spacing: 8) {
+            Text("PICTURE GUIDE").font(.system(size: 13, weight: .black, design: .rounded)).foregroundColor(Color(red: 0.25, green: 0.15, blue: 0.08))
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(12), spacing: 2), count: 9), spacing: 2) {
+                ForEach(0..<81, id: \.self) { index in
+                    Rectangle().fill(colors[(index + index / 9) % 3]).frame(width: 12, height: 12)
+                }
+            }.padding(12).background(.white).clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .padding(14).background(Color(red: 0.72, green: 0.51, blue: 0.31)).clipShape(RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 5))
+    }
+
+    private var numberPicker: some View {
+        HStack(spacing: 10) {
+            ForEach(1...3, id: \.self) { number in
+                Button { selectedNumber = number } label: {
+                    Text("\(number)").font(.system(size: 18, weight: .black, design: .rounded)).foregroundColor(.white).frame(width: 58, height: 58).background(colors[number - 1]).clipShape(Circle()).overlay(Circle().stroke(selectedNumber == number ? Color.green : .clear, lineWidth: 6))
+                }.buttonStyle(.plain)
+            }
+        }.padding(10).background(.white).clipShape(Capsule()).shadow(color: .black.opacity(0.12), radius: 10, y: 5)
+    }
+
+    private var board: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 11), spacing: 4) {
+            ForEach(Array(grid.joined()).indices, id: \.self) { index in
+                let value = Array(grid.joined())[index]
+                Button { if value == selectedNumber { filledCells.insert(index) } } label: {
+                    Group { if let value { Text(filledCells.contains(index) ? "" : "\(value)").font(.system(size: 18, weight: .bold, design: .rounded)).foregroundColor(studioInk) } else { Color.clear } }
+                        .frame(minWidth: 44, minHeight: 44).background(filledCells.contains(index) ? colors[selectedNumber - 1] : Color(red: 0.97, green: 0.98, blue: 0.99)).clipShape(RoundedRectangle(cornerRadius: 5)).overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.gray.opacity(0.18), lineWidth: 1))
+                }.buttonStyle(.plain)
+            }
+        }.padding(18).background(Color(red: 0.72, green: 0.51, blue: 0.31)).clipShape(RoundedRectangle(cornerRadius: 26)).overlay(RoundedRectangle(cornerRadius: 26).stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 7)).frame(maxWidth: 650)
+    }
+
+    private func utilityButton(_ icon: String, title: String) -> some View {
+        Button {} label: { Image(systemName: icon).font(.system(size: 22, weight: .bold)).foregroundColor(.white).frame(width: 66, height: 66).background(Color.green).clipShape(RoundedRectangle(cornerRadius: 16)) }.buttonStyle(.plain).accessibilityLabel(title)
+    }
+}
+
+private struct DottedPaperBackground: View {
+    var body: some View {
+        Canvas { context, size in
+            let step: CGFloat = 24
+            for x in stride(from: 0, through: size.width, by: step) {
+                for y in stride(from: 0, through: size.height, by: step) {
+                    context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 2, height: 2)), with: .color(Color.orange.opacity(0.10)))
+                }
+            }
+        }
+        .allowsHitTesting(false)
     }
 }
 
