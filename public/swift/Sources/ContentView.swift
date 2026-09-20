@@ -196,20 +196,45 @@ private struct ColorByNumberView: View {
     @State private var selectedPicture: VectorShapeType = .star
     @State private var isGridVisible = true
     @State private var isHintVisible = false
-    private let grid: [[Int?]] = [
-        [nil, nil, nil, 1, 1, 1, nil, nil, 1, 1, nil],
-        [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
-        [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
-        [1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1],
-        [1, 1, 1, 2, 3, 2, 2, 3, 2, 1, 1],
-        [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil],
-        [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil],
-        [nil, nil, 1, 3, 3, 3, 3, 1, 1, nil, nil],
-        [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
-        [nil, nil, nil, nil, nil, 3, 3, nil, nil, nil, nil]
-    ]
     private let colors: [Color] = [Color(red: 0.16, green: 0.70, blue: 0.91), Color(red: 1.0, green: 0.79, blue: 0.15), Color(red: 0.18, green: 0.18, blue: 0.21)]
+
+    // Every picture owns its own number map. Keeping the map derived from the selection
+    // prevents the board from staying on the default picture after a new choice.
+    private var grid: [[Int?]] {
+        switch selectedPicture.category {
+        case .animals: return [
+            [nil, nil, 1, 1, nil, nil, 1, 1, nil, nil, nil], [nil, 1, 2, 2, 1, nil, 1, 2, 2, 1, nil],
+            [1, 2, 3, 2, 2, 1, 1, 2, 3, 2, 1], [1, 2, 2, 2, 2, 1, 1, 2, 2, 2, 1],
+            [1, 2, 2, 3, 2, 1, 1, 2, 3, 2, 1], [nil, 1, 2, 2, 1, nil, 1, 2, 2, 1, nil],
+            [nil, nil, 1, 1, nil, nil, 1, 1, nil, nil, nil], [nil, 1, 1, 2, 2, 2, 2, 2, 1, 1, nil],
+            [nil, 1, 2, 2, 2, 2, 2, 2, 2, 1, nil], [nil, nil, 1, 1, 1, 1, 1, 1, 1, nil, nil]
+        ]
+        case .vehicles: return [
+            [nil, nil, nil, nil, 1, 1, 1, nil, nil, nil, nil], [nil, nil, nil, 1, 2, 2, 2, 1, nil, nil, nil],
+            [nil, nil, 1, 2, 2, 3, 2, 2, 1, nil, nil], [nil, 1, 2, 2, 2, 2, 2, 2, 2, 1, nil],
+            [1, 2, 2, 3, 2, 2, 2, 3, 2, 2, 1], [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [nil, 1, 1, nil, nil, nil, nil, 1, 1, nil, nil],
+            [nil, 1, 1, nil, nil, nil, nil, 1, 1, nil, nil], [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+        ]
+        default: return [
+            [nil, nil, nil, 1, 1, 1, nil, nil, 1, 1, nil], [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
+            [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil], [1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1],
+            [1, 1, 1, 2, 3, 2, 2, 3, 2, 1, 1], [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil],
+            [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil], [nil, nil, 1, 3, 3, 3, 3, 1, 1, nil, nil],
+            [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil], [nil, nil, nil, nil, nil, 3, 3, nil, nil, nil]
+        ]
+        }
+    }
+
     private var flattenedGrid: [Int?] { grid.flatMap { $0 } }
+
+    private func selectPicture(_ shape: VectorShapeType) {
+        selectedPicture = shape
+        selectedNumber = 1
+        filledCells.removeAll()
+        isHintVisible = false
+        state.setVectorTarget(shape)
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -232,30 +257,34 @@ private struct ColorByNumberView: View {
                     .padding(.horizontal, 28)
                     .padding(.top, 54)
 
-                    HStack(alignment: .top, spacing: 28) {
-                        VStack(spacing: 16) {
-                            picturePicker
-                            guidePanel
-                            numberPicker
-                            HStack(spacing: 12) {
-                                utilityButton("tablecells", title: isGridVisible ? "Hide Grid" : "Show Grid") {
-                                    isGridVisible.toggle()
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 28) {
+                            VStack(spacing: 16) {
+                                picturePicker
+                                guidePanel
+                                numberPicker
+                                HStack(spacing: 12) {
+                                    utilityButton("tablecells", title: isGridVisible ? "Hide Grid" : "Show Grid") {
+                                        isGridVisible.toggle()
+                                    }
+                                    utilityButton("lightbulb.fill", title: "Hint") {
+                                        revealHint()
+                                    }
                                 }
-                                utilityButton("lightbulb.fill", title: "Hint") {
-                                    revealHint()
+                                if isHintVisible {
+                                    Text("Pick number \(selectedNumber), then tap every matching square.")
+                                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                                        .foregroundColor(.orange)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: 190)
                                 }
                             }
-                            if isHintVisible {
-                                Text("Pick number \(selectedNumber), then tap every matching square.")
-                                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                                    .foregroundColor(.orange)
-                                    .multilineTextAlignment(.center)
-                                    .frame(maxWidth: 190)
-                            }
+                            board
                         }
-                        board
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 24)
                     }
-                    .frame(maxWidth: 1100, maxHeight: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     Spacer(minLength: 10)
                 }
             }
@@ -271,9 +300,7 @@ private struct ColorByNumberView: View {
                 HStack(spacing: 8) {
                     ForEach(VectorShapeType.allCases, id: \.self) { shape in
                         Button {
-                            selectedPicture = shape
-                            filledCells.removeAll()
-                            state.setVectorTarget(shape)
+                            selectPicture(shape)
                         } label: {
                             VStack(spacing: 4) {
                                 VectorRendererView(shapeType: shape, strokeColor: colors[0], lineWidth: 2)
