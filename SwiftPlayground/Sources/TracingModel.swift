@@ -241,8 +241,8 @@ public class TracingAppState: ObservableObject {
     
     // Active Brush & Pro Tools
     @Published public var currentTool: DrawingTool = .brush
-    @Published public var selectedColor: Color = Color(red: 0.0, green: 0.48, blue: 1.0)
-    @Published public var lineWidth: CGFloat = 6.0
+    @Published public var selectedColor: Color = Color(red: 0.925, green: 0.282, blue: 0.600)
+    @Published public var lineWidth: CGFloat = 7.0
     @Published public var brushOpacity: Double = 1.0
     
     // Reference Layer State
@@ -276,8 +276,8 @@ public class TracingAppState: ObservableObject {
     
     // Preset Vibrant Color Palette
     public let vibrantColors: [Color] = [
-        Color(red: 0.0, green: 0.48, blue: 1.0),   // Electric iOS Blue
-        Color(red: 0.35, green: 0.34, blue: 0.84), // Indigo
+        Color(red: 0.925, green: 0.282, blue: 0.600), // React default magenta
+        Color(red: 0.145, green: 0.388, blue: 0.922), // React blue
         Color(red: 0.69, green: 0.32, blue: 0.87), // Purple
         Color(red: 1.0, green: 0.18, blue: 0.33),  // Neon Pink
         Color(red: 1.0, green: 0.23, blue: 0.19),  // Vibrant Red
