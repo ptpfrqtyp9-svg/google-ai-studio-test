@@ -190,6 +190,9 @@ private struct ColorByNumberView: View {
     let openLibrary: () -> Void
     @State private var selectedNumber = 1
     @State private var filledCells: [Int: Int] = [:]
+    @State private var selectedPicture: VectorShapeType = .star
+    @State private var isGridVisible = true
+    @State private var isHintVisible = false
     private let grid: [[Int?]] = [
         [nil, nil, nil, 1, 1, 1, nil, nil, 1, 1, nil],
         [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
@@ -227,11 +230,23 @@ private struct ColorByNumberView: View {
 
                     HStack(alignment: .top, spacing: 28) {
                         VStack(spacing: 16) {
+                            picturePicker
                             guidePanel
                             numberPicker
                             HStack(spacing: 12) {
-                                utilityButton("tablecells", title: "Grid")
-                                utilityButton("lightbulb", title: "Hint")
+                                utilityButton("tablecells", title: isGridVisible ? "Hide Grid" : "Show Grid") {
+                                    isGridVisible.toggle()
+                                }
+                                utilityButton("lightbulb.fill", title: "Hint") {
+                                    revealHint()
+                                }
+                            }
+                            if isHintVisible {
+                                Text("Pick number \(selectedNumber), then tap every matching square.")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(.orange)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: 190)
                             }
                         }
                         board
@@ -243,16 +258,68 @@ private struct ColorByNumberView: View {
         }
     }
 
+    private var picturePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("PICK A PICTURE")
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundColor(studioInk)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(VectorShapeType.allCases, id: \.self) { shape in
+                        Button {
+                            selectedPicture = shape
+                            filledCells.removeAll()
+                            state.setVectorTarget(shape)
+                        } label: {
+                            VStack(spacing: 4) {
+                                VectorRendererView(shapeType: shape, strokeColor: colors[0], lineWidth: 2)
+                                    .frame(width: 52, height: 42)
+                                Text(shape.rawValue)
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .lineLimit(1)
+                            }
+                            .foregroundColor(studioInk)
+                            .padding(6)
+                            .background(selectedPicture == shape ? Color.cyan.opacity(0.18) : Color.white.opacity(0.9))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(selectedPicture == shape ? .cyan : .clear, lineWidth: 2))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+    }
+
     private var guidePanel: some View {
         VStack(spacing: 8) {
             Text("PICTURE GUIDE").font(.system(size: 13, weight: .black, design: .rounded)).foregroundColor(Color(red: 0.25, green: 0.15, blue: 0.08))
-            LazyVGrid(columns: Array(repeating: GridItem(.fixed(12), spacing: 2), count: 9), spacing: 2) {
-                ForEach(0..<81, id: \.self) { index in
-                    Rectangle().fill(colors[(index + index / 9) % 3]).frame(width: 12, height: 12)
+            ZStack {
+                RoundedRectangle(cornerRadius: 12).fill(.white)
+                VectorRendererView(shapeType: selectedPicture, strokeColor: colors[0], lineWidth: 3)
+                    .padding(22)
+                VStack {
+                    HStack {
+                        guideBadge(1, color: colors[0])
+                        Spacer()
+                        guideBadge(2, color: colors[1])
+                    }
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        guideBadge(3, color: colors[2])
+                    }
                 }
-            }.padding(12).background(.white).clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(10)
+            }
+            .frame(width: 190, height: 150)
         }
         .padding(14).background(Color(red: 0.72, green: 0.51, blue: 0.31)).clipShape(RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 5))
+    }
+
+    private func guideBadge(_ number: Int, color: Color) -> some View {
+        Text("\(number)").font(.system(size: 12, weight: .black, design: .rounded)).foregroundColor(.white).frame(width: 26, height: 26).background(color).clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2))
     }
 
     private var numberPicker: some View {
@@ -286,15 +353,30 @@ private struct ColorByNumberView: View {
                     .frame(minWidth: 44, minHeight: 44)
                     .background(filledCells[index].map { colors[$0 - 1] } ?? Color(red: 0.97, green: 0.98, blue: 0.99))
                     .clipShape(RoundedRectangle(cornerRadius: 5))
-                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.gray.opacity(0.18), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(isHintVisible && value == selectedNumber && filledCells[index] == nil ? colors[selectedNumber - 1] : (isGridVisible ? Color.gray.opacity(0.18) : .clear), lineWidth: isHintVisible && value == selectedNumber && filledCells[index] == nil ? 3 : 1))
                 }
                 .buttonStyle(.plain)
             }
         }.padding(18).background(Color(red: 0.72, green: 0.51, blue: 0.31)).clipShape(RoundedRectangle(cornerRadius: 26)).overlay(RoundedRectangle(cornerRadius: 26).stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 7)).frame(maxWidth: 650)
     }
 
-    private func utilityButton(_ icon: String, title: String) -> some View {
-        Button {} label: { Image(systemName: icon).font(.system(size: 22, weight: .bold)).foregroundColor(.white).frame(width: 66, height: 66).background(Color.green).clipShape(RoundedRectangle(cornerRadius: 16)) }.buttonStyle(.plain).accessibilityLabel(title)
+    private func revealHint() {
+        isHintVisible = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            isHintVisible = false
+        }
+    }
+
+    private func utilityButton(_ icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 20, weight: .bold))
+                Text(title).font(.system(size: 9, weight: .black, design: .rounded)).lineLimit(1)
+            }
+            .foregroundColor(.white).frame(width: 70, height: 66).background(Color.green).clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
     }
 }
 
