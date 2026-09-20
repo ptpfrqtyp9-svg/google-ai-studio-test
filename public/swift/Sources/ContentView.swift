@@ -339,29 +339,49 @@ private struct ColorByNumberView: View {
     private var board: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 11), spacing: 4) {
             ForEach(flattenedGrid.indices, id: \.self) { index in
-                let value = flattenedGrid[index]
-                Button {
-                    if let value, value == selectedNumber {
-                        filledCells[index] = value
-                    }
-                } label: {
-                    Group {
-                        if let value {
-                            Text(filledCells[index] == value ? "" : "\(value)")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
-                                .foregroundColor(studioInk)
-                        } else {
-                            Color.clear
-                        }
-                    }
-                    .frame(minWidth: 44, minHeight: 44)
-                    .background(filledCells[index].map { colors[$0 - 1] } ?? Color(red: 0.97, green: 0.98, blue: 0.99))
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
-                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(isHintVisible && value == selectedNumber && filledCells[index] == nil ? colors[selectedNumber - 1] : (isGridVisible ? Color.gray.opacity(0.18) : .clear), lineWidth: isHintVisible && value == selectedNumber && filledCells[index] == nil ? 3 : 1))
-                }
-                .buttonStyle(.plain)
+                numberCell(at: index)
             }
-        }.padding(18).background(Color(red: 0.72, green: 0.51, blue: 0.31)).clipShape(RoundedRectangle(cornerRadius: 26)).overlay(RoundedRectangle(cornerRadius: 26).stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 7)).frame(maxWidth: 650)
+        }
+        .padding(18)
+        .background(Color(red: 0.72, green: 0.51, blue: 0.31))
+        .clipShape(RoundedRectangle(cornerRadius: 26))
+        .overlay {
+            RoundedRectangle(cornerRadius: 26)
+                .stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 7)
+        }
+        .frame(maxWidth: 650)
+    }
+
+    private func numberCell(at index: Int) -> some View {
+        let value = flattenedGrid[index]
+        let isFilled = value.map { filledCells[index] == $0 } ?? false
+        let isHinted = isHintVisible && value == selectedNumber && !isFilled
+        let fillColor = filledCells[index].map { colors[$0 - 1] } ?? Color(red: 0.97, green: 0.98, blue: 0.99)
+        let borderColor = isHinted ? colors[selectedNumber - 1] : (isGridVisible ? Color.gray.opacity(0.18) : .clear)
+        let borderWidth: CGFloat = isHinted ? 3 : 1
+
+        return Button {
+            guard let value, value == selectedNumber else { return }
+            filledCells[index] = value
+        } label: {
+            Group {
+                if let value {
+                    Text(isFilled ? "" : "\(value)")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(studioInk)
+                } else {
+                    Color.clear
+                }
+            }
+            .frame(minWidth: 44, minHeight: 44)
+            .background(fillColor)
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .overlay {
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(borderColor, lineWidth: borderWidth)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private func revealHint() {
