@@ -345,7 +345,7 @@ private struct ColorByNumberView: View {
     private var colorNumberSidebar: some View {
         VStack(spacing: 16) {
             guidePanel
-            numberPicker
+            progressionIndicator
             HStack(spacing: 12) {
                 utilityButton("tablecells", title: isGridVisible ? "Hide Grid" : "Show Grid") {
                     isGridVisible.toggle()
@@ -361,6 +361,27 @@ private struct ColorByNumberView: View {
                     .multilineTextAlignment(.center)
             }
         }
+    }
+
+    private var progressionIndicator: some View {
+        VStack(spacing: 6) {
+            Text("COLOR IN ORDER")
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .foregroundColor(studioInk.opacity(0.7))
+            HStack(spacing: 8) {
+                ForEach(1...3, id: \.self) { number in
+                    Circle()
+                        .fill(number < selectedNumber ? colors[number - 1] : (number == selectedNumber ? colors[number - 1] : Color.gray.opacity(0.25)))
+                        .frame(width: 34, height: 34)
+                        .overlay {
+                            Text(number < selectedNumber ? "✓" : "\(number)")
+                                .font(.system(size: 14, weight: .black, design: .rounded))
+                                .foregroundColor(number <= selectedNumber ? .white : studioInk.opacity(0.45))
+                        }
+                }
+            }
+        }
+        .padding(.vertical, 4)
     }
 
     private var numberPicker: some View {
@@ -429,12 +450,15 @@ private struct ColorByNumberView: View {
         let isComplete = !cellsForNumber.isEmpty && cellsForNumber.allSatisfy { filledCells[$0] == number }
         guard isComplete else { return }
 
-        if let nextNumber = (number + 1...3).first(where: { candidate in
-            flattenedGrid.contains(candidate) && !flattenedGrid.enumerated().contains { index, value in
-                value == candidate && filledCells[index] == candidate
+        let remainingNumbers = (number + 1...3).filter { candidate in
+            flattenedGrid.enumerated().contains { index, value in
+                value == candidate && filledCells[index] != candidate
             }
-        }) {
+        }
+        if let nextNumber = remainingNumbers.first {
             selectedNumber = nextNumber
+            isHintVisible = false
+        } else if number == 3 {
             isHintVisible = false
         }
     }
