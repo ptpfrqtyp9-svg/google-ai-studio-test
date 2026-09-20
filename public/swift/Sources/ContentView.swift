@@ -227,6 +227,9 @@ private struct ColorByNumberView: View {
     }
 
     private var flattenedGrid: [Int?] { grid.flatMap { $0 } }
+    private var gridColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 4), count: 11)
+    }
 
     private func selectPicture(_ shape: VectorShapeType) {
         selectedPicture = shape
@@ -286,6 +289,11 @@ private struct ColorByNumberView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     Spacer(minLength: 10)
+                }
+            }
+            .onChange(of: state.referenceTarget) { _, target in
+                if case .vector(let shape) = target, shape != selectedPicture {
+                    selectPicture(shape)
                 }
             }
         }
@@ -364,8 +372,8 @@ private struct ColorByNumberView: View {
     }
 
     private var board: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 11), spacing: 4) {
-            ForEach(flattenedGrid.indices, id: \.self) { index in
+        LazyVGrid(columns: gridColumns, spacing: 4) {
+            ForEach(Array(flattenedGrid.indices), id: \.self) { index in
                 numberCell(at: index)
             }
         }

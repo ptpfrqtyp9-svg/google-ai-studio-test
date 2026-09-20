@@ -28,6 +28,7 @@ public struct BottomToolbarView: View {
                 }
                 mainToolbarCapsule
             }
+            .frame(width: isBrushKitExpanded ? 250 : 92)
             .frame(maxHeight: .infinity, alignment: .center)
         }
         .padding(.trailing, 14)
