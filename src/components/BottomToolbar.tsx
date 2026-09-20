@@ -1,27 +1,19 @@
 import React, { useState } from 'react';
-import { CompositionGuideMode, DrawingTool, EraserSize } from '../types';
+import { DrawingTool, EraserSize } from '../types';
 import {
   Sparkles,
   Move,
   Eye,
   EyeOff,
-  PenLine,
   Eraser,
   Undo2,
   Redo2,
   Share2,
-  Palette,
-  Layers,
-  Trash2,
 } from 'lucide-react';
 
 interface BottomToolbarProps {
   currentTool: DrawingTool;
   onSelectTool: (tool: DrawingTool) => void;
-  selectedColor: string;
-  onSelectColor: (color: string) => void;
-  lineWidth: number;
-  onChangeLineWidth: (width: number) => void;
   referenceOpacity: number;
   onChangeReferenceOpacity: (opacity: number) => void;
   isReferenceVisible: boolean;
@@ -35,30 +27,14 @@ interface BottomToolbarProps {
   onUndo: () => void;
   onRedo: () => void;
   onOpenColorByNumber: () => void;
-  onClearCanvas: () => void;
   hasStrokes: boolean;
-  onToggleColorSidebar: () => void;
   eraserSize: EraserSize;
   onChangeEraserSize: (size: EraserSize) => void;
 }
 
-// Quick popular kid colors shown directly on the toolbar capsule
-const QUICK_KID_COLORS = [
-  '#ef4444', // Red
-  '#f97316', // Orange
-  '#facc15', // Yellow
-  '#22c55e', // Green
-  '#0ea5e9', // Blue
-  '#a855f7', // Purple
-  '#ec4899', // Pink
-  '#18181b', // Charcoal
-];
-
 export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   currentTool,
   onSelectTool,
-  selectedColor,
-  onSelectColor,
   referenceOpacity,
   onChangeReferenceOpacity,
   isReferenceVisible,
@@ -72,9 +48,6 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   onUndo,
   onRedo,
   onOpenColorByNumber,
-  onClearCanvas,
-  hasStrokes,
-  onToggleColorSidebar,
   eraserSize,
   onChangeEraserSize,
 }) => {
@@ -82,10 +55,10 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   const [isEraserMenuOpen, setIsEraserMenuOpen] = useState<boolean>(false);
 
   return (
-    <div className="flex flex-col items-center gap-2 max-w-5xl mx-auto px-2 sm:px-4">
+    <div className="flex flex-col items-center gap-2 max-w-4xl mx-auto px-2 sm:px-4">
       {/* 1. Picture Faintness Capsule (Quick touch-friendly popover) */}
       {isFaintnessOpen && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-white/95 backdrop-blur-xl border-2 border-amber-300 rounded-2xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-150 select-none text-gray-800">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-white/95 backdrop-blur-xl border-2 border-amber-300 rounded-2xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-150 select-none text-gray-800">
           <span className="text-[11px] font-black text-amber-900 pl-1">
             Picture Faintness:
           </span>
@@ -141,7 +114,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
       {isEraserMenuOpen && currentTool === 'eraser' && (
         <div className="flex items-center gap-2 px-3 py-1.5 bg-white/95 backdrop-blur-xl border-2 border-rose-300 rounded-2xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-150 select-none text-gray-800">
           <span className="text-[11px] font-black text-rose-700 pl-1">
-            Object Eraser Size:
+            Eraser Size:
           </span>
           {(['small', 'medium', 'large'] as EraserSize[]).map((size) => (
             <button
@@ -162,46 +135,12 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
         </div>
       )}
 
-      {/* 3. Quick Color Swatches Bar */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-xl border-2 border-amber-200/80 rounded-full shadow-lg overflow-x-auto max-w-full">
-        <span className="text-[11px] font-black text-amber-900 hidden xs:inline pl-1">
-          Colors:
-        </span>
-        {QUICK_KID_COLORS.map((hex) => {
-          const isSelected = selectedColor.toLowerCase() === hex.toLowerCase();
-          return (
-            <button
-              key={hex}
-              onClick={() => {
-                onSelectColor(hex);
-                if (currentTool === 'eraser') onSelectTool('pen');
-              }}
-              className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-transform flex-shrink-0 ${
-                isSelected
-                  ? 'ring-2 ring-amber-500 scale-125 shadow-md'
-                  : 'hover:scale-110 border border-black/10'
-              }`}
-              style={{ backgroundColor: hex }}
-            />
-          );
-        })}
-
-        {/* Sidebar Colors Launcher Button */}
-        <button
-          onClick={onToggleColorSidebar}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[11px] font-black transition-transform hover:scale-105 active:scale-95 shadow-sm ml-1 flex-shrink-0"
-        >
-          <Palette className="w-3.5 h-3.5" />
-          <span>All Colors & Sizes</span>
-        </button>
-      </div>
-
-      {/* 4. Primary Kid-Friendly Action Capsule */}
-      <div className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 bg-white/95 backdrop-blur-2xl border-2 border-amber-300 rounded-full shadow-2xl overflow-x-auto max-w-full">
+      {/* 3. Primary Bottom Kid-Friendly Action Capsule */}
+      <div className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-white/95 backdrop-blur-2xl border-2 border-amber-300 rounded-full shadow-2xl overflow-x-auto max-w-full">
         {/* Pictures Library */}
         <button
           onClick={onOpenTargetModal}
-          className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-black transition-transform hover:scale-105 active:scale-95 shadow-md flex-shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-black transition-transform hover:scale-105 active:scale-95 shadow-md flex-shrink-0"
           title="Choose a Picture to Draw"
         >
           <Sparkles className="w-4 h-4" />
@@ -211,7 +150,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
         {/* Color by Number Toggle */}
         <button
           onClick={onOpenColorByNumber}
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black text-xs font-black transition-transform hover:scale-105 active:scale-95 shadow-md flex-shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black text-xs font-black transition-transform hover:scale-105 active:scale-95 shadow-md flex-shrink-0"
           title="Play Color by Number"
         >
           <span className="text-xs">🔢</span>
@@ -219,20 +158,6 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
         </button>
 
         <div className="w-px h-6 bg-gray-300 mx-0.5 flex-shrink-0" />
-
-        {/* Draw (Pen) Tool */}
-        <button
-          onClick={() => onSelectTool('pen')}
-          className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
-            currentTool !== 'eraser'
-              ? 'bg-amber-500 text-white shadow-md scale-105'
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          }`}
-          title="Draw with Pen/Crayon"
-        >
-          <PenLine className="w-4 h-4" />
-          <span className="hidden sm:inline">Draw</span>
-        </button>
 
         {/* Object Eraser */}
         <button
@@ -244,7 +169,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               setIsEraserMenuOpen(true);
             }
           }}
-          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
             currentTool === 'eraser'
               ? 'bg-rose-500 text-white shadow-md scale-105 ring-2 ring-rose-300'
               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -252,13 +177,13 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           title="Object Eraser (Tap to change size or swipe across any line to delete it)"
         >
           <Eraser className="w-4 h-4" />
-          <span>Object Eraser</span>
+          <span>Eraser</span>
         </button>
 
         {/* Picture Faintness Toggle */}
         <button
           onClick={() => setIsFaintnessOpen(!isFaintnessOpen)}
-          className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
+          className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
             isFaintnessOpen
               ? 'bg-amber-100 text-amber-800 border border-amber-300'
               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -272,7 +197,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
         {/* Move & Zoom Button */}
         <button
           onClick={onToggleAdjustReference}
-          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
             isAdjustingReference
               ? 'bg-amber-500 text-white shadow-md font-black ring-2 ring-amber-300'
               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -290,7 +215,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-opacity"
+            className="p-1.5 sm:p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-opacity"
             title="Undo stroke"
           >
             <Undo2 className="w-4 h-4" />
@@ -298,27 +223,17 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-opacity"
+            className="p-1.5 sm:p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-opacity"
             title="Redo stroke"
           >
             <Redo2 className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Erase All / Clear Canvas */}
-        <button
-          onClick={onClearCanvas}
-          disabled={!hasStrokes}
-          className="p-2 rounded-full bg-gray-100 hover:bg-rose-100 disabled:opacity-30 disabled:pointer-events-none text-rose-500 hover:text-rose-700 transition-colors flex-shrink-0"
-          title="Erase All Strokes"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-
         {/* Save / Export Drawing */}
         <button
           onClick={onOpenExportModal}
-          className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-full bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold transition-all shadow-xs flex-shrink-0"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold transition-all shadow-xs flex-shrink-0"
           title="Save Picture"
         >
           <Share2 className="w-3.5 h-3.5" />

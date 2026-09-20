@@ -210,6 +210,108 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       if (line.points.length === 0 || line.isEraser) return;
       ctx.save();
 
+      if (line.tool === 'rainbow') {
+        // Multi-color rainbow magical stroke
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineWidth = line.lineWidth * 1.25;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (line.points.length === 1) {
+          const pt = line.points[0];
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, (line.lineWidth * 1.25) / 2, 0, Math.PI * 2);
+          ctx.fillStyle = '#ec4899';
+          ctx.fill();
+        } else {
+          for (let i = 1; i < line.points.length; i++) {
+            const p1 = line.points[i - 1];
+            const p2 = line.points[i];
+            const hue = (i * 16) % 360;
+            ctx.strokeStyle = `hsl(${hue}, 95%, 52%)`;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+        return;
+      }
+
+      if (line.tool === 'glitter') {
+        // Glitter sparkle stroke
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = line.color;
+        ctx.globalAlpha = 0.92;
+        ctx.lineWidth = line.lineWidth * 1.1;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        if (line.points.length === 1) {
+          const pt = line.points[0];
+          ctx.arc(pt.x, pt.y, (line.lineWidth * 1.1) / 2, 0, Math.PI * 2);
+          ctx.fillStyle = line.color;
+          ctx.fill();
+        } else {
+          ctx.moveTo(line.points[0].x, line.points[0].y);
+          for (let i = 1; i < line.points.length; i++) {
+            const p1 = line.points[i - 1];
+            const p2 = line.points[i];
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
+            ctx.quadraticCurveTo(p1.x, p1.y, midX, midY);
+          }
+          const last = line.points[line.points.length - 1];
+          ctx.lineTo(last.x, last.y);
+          ctx.stroke();
+        }
+
+        // Draw glittering starburst sparkles along the stroke path
+        for (let i = 2; i < line.points.length; i += 4) {
+          const pt = line.points[i];
+          ctx.fillStyle = i % 8 === 0 ? '#ffffff' : '#fef08a';
+          ctx.beginPath();
+          ctx.arc(pt.x + (i % 3 - 1), pt.y + ((i * 2) % 3 - 1), 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+        return;
+      }
+
+      if (line.tool === 'crayon') {
+        // Waxy textured crayon stroke
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = line.color;
+        ctx.globalAlpha = 0.85;
+        ctx.lineWidth = line.lineWidth * 1.35;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        if (line.points.length === 1) {
+          const pt = line.points[0];
+          ctx.arc(pt.x, pt.y, (line.lineWidth * 1.35) / 2, 0, Math.PI * 2);
+          ctx.fillStyle = line.color;
+          ctx.fill();
+        } else {
+          ctx.moveTo(line.points[0].x, line.points[0].y);
+          for (let i = 1; i < line.points.length; i++) {
+            const p1 = line.points[i - 1];
+            const p2 = line.points[i];
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
+            ctx.quadraticCurveTo(p1.x, p1.y, midX, midY);
+          }
+          const last = line.points[line.points.length - 1];
+          ctx.lineTo(last.x, last.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+        return;
+      }
+
       if (line.tool === 'highlighter') {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = line.color;
@@ -225,11 +327,11 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
       } else {
-        // Studio pen (default)
+        // Paintbrush / Studio pen (default rich wet paint)
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = line.color;
         ctx.globalAlpha = line.opacity;
-        ctx.lineWidth = line.lineWidth;
+        ctx.lineWidth = line.tool === 'brush' ? line.lineWidth * 1.35 : line.lineWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
       }
@@ -237,7 +339,7 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       ctx.beginPath();
       if (line.points.length === 1) {
         const pt = line.points[0];
-        ctx.arc(pt.x, pt.y, line.lineWidth / 2, 0, Math.PI * 2);
+        ctx.arc(pt.x, pt.y, (line.tool === 'brush' ? line.lineWidth * 1.35 : line.lineWidth) / 2, 0, Math.PI * 2);
         ctx.fillStyle = line.color;
         ctx.fill();
       } else {

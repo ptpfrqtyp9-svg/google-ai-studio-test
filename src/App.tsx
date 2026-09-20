@@ -67,9 +67,6 @@ export default function App() {
   // Lively Studio Canvas Theme (default: warm ivory art paper)
   const [currentTheme, setCurrentTheme] = useState<CanvasTheme>('paper');
 
-  // Color & Brush Sidebar docked state
-  const [isColorSidebarOpen, setIsColorSidebarOpen] = useState<boolean>(false);
-
   // Canvas stroke history & state
   const [lines, setLines] = useState<DrawingLine[]>([]);
   const [currentLine, setCurrentLine] = useState<DrawingLine | null>(null);
@@ -78,9 +75,9 @@ export default function App() {
   const [undoStack, setUndoStack] = useState<DrawingLine[][]>([]);
   const [redoStack, setRedoStack] = useState<DrawingLine[][]>([]);
 
-  // Active Tool & Brush Kit settings
-  const [currentTool, setCurrentTool] = useState<DrawingTool>('pen');
-  const [selectedColor, setSelectedColor] = useState<string>('#ef4444');
+  // Active Tool & Brush Kit settings (defaults match reference: Magenta Paintbrush)
+  const [currentTool, setCurrentTool] = useState<DrawingTool>('brush');
+  const [selectedColor, setSelectedColor] = useState<string>('#ec4899');
   const [lineWidth, setLineWidth] = useState<number>(7);
   const [brushOpacity, setBrushOpacity] = useState<number>(1.0);
   const [eraserSize, setEraserSize] = useState<EraserSize>('medium');
@@ -415,7 +412,7 @@ export default function App() {
       {/* Mode 2: Free Drawing Canvas & Kid-Friendly Toolbar */}
       {appMode === 'free-draw' && (
         <>
-          <main className="flex-1 w-full h-full relative">
+          <main className="flex-1 w-full h-full relative pl-20 sm:pl-28 md:pl-32 pr-2 sm:pr-4">
             <DualLayerCanvas
               lines={lines}
               currentLine={currentLine}
@@ -436,20 +433,16 @@ export default function App() {
             />
           </main>
 
-          {/* Docked Left Color & Brush Sidebar */}
+          {/* Permanently Open Left Kid Color & Brush Sidebar */}
           <ColorSidebar
-            isOpen={isColorSidebarOpen}
-            onToggle={() => setIsColorSidebarOpen(!isColorSidebarOpen)}
             selectedColor={selectedColor}
             onSelectColor={setSelectedColor}
-            lineWidth={lineWidth}
-            onChangeLineWidth={setLineWidth}
             currentTool={currentTool}
             onSelectTool={setCurrentTool}
+            onClearCanvas={() => setIsClearModalOpen(true)}
+            onSaveOrNext={() => setIsExportModalOpen(true)}
             eraserSize={eraserSize}
             onChangeEraserSize={setEraserSize}
-            currentTheme={currentTheme}
-            onChangeTheme={setCurrentTheme}
           />
 
           {/* Bottom Floating Capsule Toolbar */}
@@ -457,10 +450,6 @@ export default function App() {
             <BottomToolbar
               currentTool={currentTool}
               onSelectTool={setCurrentTool}
-              selectedColor={selectedColor}
-              onSelectColor={setSelectedColor}
-              lineWidth={lineWidth}
-              onChangeLineWidth={setLineWidth}
               referenceOpacity={referenceOpacity}
               onChangeReferenceOpacity={(val) => {
                 setReferenceOpacity(val);
@@ -478,9 +467,7 @@ export default function App() {
               onUndo={handleUndo}
               onRedo={handleRedo}
               onOpenColorByNumber={() => setAppMode('color-by-number')}
-              onClearCanvas={() => setIsClearModalOpen(true)}
               hasStrokes={lines.length > 0}
-              onToggleColorSidebar={() => setIsColorSidebarOpen(!isColorSidebarOpen)}
               eraserSize={eraserSize}
               onChangeEraserSize={setEraserSize}
             />

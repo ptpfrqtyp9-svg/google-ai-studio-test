@@ -71,7 +71,15 @@ export interface VectorShapeMetadata {
   icon?: string;
 }
 
-export type DrawingTool = 'pen' | 'pencil' | 'highlighter' | 'eraser';
+export type DrawingTool =
+  | 'brush'
+  | 'crayon'
+  | 'glitter'
+  | 'rainbow'
+  | 'pen'
+  | 'pencil'
+  | 'highlighter'
+  | 'eraser';
 
 export interface StrokePoint {
   x: number;
