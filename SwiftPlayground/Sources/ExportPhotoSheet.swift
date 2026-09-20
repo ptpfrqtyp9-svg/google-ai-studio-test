@@ -183,7 +183,8 @@ public struct ExportPhotoSheet: View {
     private func saveToPhotos() {
         isSaving = true
         
-        let canvasSize = CGSize(width: 1080 * exportScale / 2.0, height: 1080 * exportScale / 2.0)
+        let baseSize = CGSize(width: 1080, height: 1080)
+        let canvasSize = CGSize(width: baseSize.width * exportScale, height: baseSize.height * exportScale)
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1.0
         format.opaque = selectedBackground != .transparent
@@ -192,41 +193,78 @@ public struct ExportPhotoSheet: View {
         let image = renderer.image { ctx in
             let cgContext = ctx.cgContext
             
-            // Draw background
             switch selectedBackground {
             case .transparent:
                 break
             case .darkMat, .composite:
-                cgContext.setFillColor(UIColor(red: 0.09, green: 0.09, blue: 0.11, alpha: 1.0).cgColor)
+                cgContext.setFillColor(UIColor(red: 0.98, green: 0.976, blue: 0.961, alpha: 1).cgColor)
                 cgContext.fill(CGRect(origin: .zero, size: canvasSize))
             }
             
-            // Scale and center user strokes
+            // Fit the on-screen canvas coordinate space into the square export.
+            // This keeps strokes in the same relative positions instead of clipping them.
+            let allPoints = appState.lines.flatMap { $0.points }
+            let sourceBounds: CGRect
+            if allPoints.isEmpty {
+                sourceBounds = CGRect(x: 0, y: 0, width: 1, height: 1)
+            } else {
+                sourceBounds = allPoints.reduce(CGRect.null) { $0.union(CGRect(origin: $1, size: .zero)) }
+            }
+            let sourceW = max(sourceBounds.width, 1)
+            let sourceH = max(sourceBounds.height, 1)
+            let sourceCenter = CGPoint(x: sourceBounds.midX, y: sourceBounds.midY)
+            let exportCenter = CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+            let fit = min(canvasSize.width / sourceW, canvasSize.height / sourceH) * 0.82
+            
             cgContext.saveGState()
+            cgContext.translateBy(x: exportCenter.x - sourceCenter.x * fit, y: exportCenter.y - sourceCenter.y * fit)
+            cgContext.scaleBy(x: fit, y: fit)
             
             for line in appState.lines {
                 guard let first = line.points.first else { continue }
                 cgContext.beginPath()
                 cgContext.move(to: first)
-                for pt in line.points.dropFirst() {
-                    cgContext.addLine(to: pt)
-                }
-                
+                for pt in line.points.dropFirst() { cgContext.addLine(to: pt) }
                 cgContext.setLineCap(.round)
                 cgContext.setLineJoin(.round)
-                cgContext.setLineWidth(line.lineWidth * exportScale)
+                cgContext.setLineWidth(line.lineWidth)
                 
                 if line.isEraser {
-                    cgContext.setBlendMode(.clear)
+                    // Erasing should reveal the selected background, not punch holes in opaque exports.
+                    if selectedBackground == .transparent {
+                        cgContext.setBlendMode(.clear)
+                    } else {
+                        cgContext.setBlendMode(.normal)
+                        cgContext.setStrokeColor(UIColor(red: 0.98, green: 0.976, blue: 0.961, alpha: 1).cgColor)
+                    }
                 } else {
                     cgContext.setBlendMode(.normal)
-                    let uiCol = UIColor(line.color).withAlphaComponent(line.opacity)
-                    cgContext.setStrokeColor(uiCol.cgColor)
+                    cgContext.setStrokeColor(UIColor(line.color).withAlphaComponent(line.opacity).cgColor)
                 }
                 cgContext.strokePath()
             }
-            
             cgContext.restoreGState()
+            
+            if selectedBackground == .composite {
+                cgContext.saveGState()
+                cgContext.translateBy(x: canvasSize.width / 2, y: canvasSize.height / 2)
+                cgContext.scaleBy(x: appState.referenceTransform.scale * exportScale,
+                                  y: appState.referenceTransform.scale * exportScale)
+                cgContext.translateBy(x: appState.referenceTransform.offset.width,
+                                      y: appState.referenceTransform.offset.height)
+                let refRect = CGRect(x: -420, y: -420, width: 840, height: 840)
+                switch appState.referenceTarget {
+                case let .vector(shape):
+                    let renderer = ImageRenderer(content: VectorRendererView(shapeType: shape, strokeColor: Color(red: 0.145, green: 0.388, blue: 0.922), lineWidth: 4).frame(width: 840, height: 840))
+                    if let refImage = renderer.uiImage { refImage.draw(in: refRect) }
+                case let .symbol(symbol):
+                    let renderer = ImageRenderer(content: Image(systemName: symbol).resizable().scaledToFit().foregroundColor(Color(red: 0.145, green: 0.388, blue: 0.922)).frame(width: 840, height: 840))
+                    if let refImage = renderer.uiImage { refImage.draw(in: refRect) }
+                case let .image(image):
+                    image.draw(in: refRect.insetBy(dx: 30, dy: 30))
+                }
+                cgContext.restoreGState()
+            }
         }
         
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
