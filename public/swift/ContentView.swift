@@ -40,9 +40,9 @@ public struct ContentView: View {
                     Spacer()
                     
                     // Export to Photos Button
-                    Button(action: {
+                    Button {
                         isExportPresented = true
-                    }) {
+                    } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.system(size: 13, weight: .bold))
@@ -61,11 +61,11 @@ public struct ContentView: View {
                     }
                     
                     // Clear Canvas Action
-                    Button(action: {
+                    Button {
                         if !state.lines.isEmpty {
                             isClearConfirmationPresented = true
                         }
-                    }) {
+                    } label: {
                         Image(systemName: "trash")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.gray)

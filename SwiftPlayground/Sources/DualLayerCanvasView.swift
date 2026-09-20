@@ -38,9 +38,9 @@ public struct DualLayerCanvasView: View {
                             Text("Reference Adjust Mode • Pan & Pinch to Align")
                                 .font(.system(size: 12, weight: .bold))
                             
-                            Button(action: {
+                            Button {
                                 state.resetReferenceTransform()
-                            }) {
+                            } label: {
                                 Text("Reset")
                                     .font(.system(size: 11, weight: .heavy))
                                     .padding(.horizontal, 8)

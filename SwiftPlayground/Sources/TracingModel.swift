@@ -23,6 +23,7 @@ public struct DrawingPoint: Equatable, Codable {
 }
 
 public enum DrawingTool: String, CaseIterable, Identifiable {
+    case brush = "Studio Brush"
     case pen = "Studio Pen"
     case pencil = "Graphite Pencil"
     case highlighter = "Marker"
@@ -32,6 +33,7 @@ public enum DrawingTool: String, CaseIterable, Identifiable {
     
     public var systemIcon: String {
         switch self {
+        case .brush: return "paintbrush.pointed.fill"
         case .pen: return "pencil.tip"
         case .pencil: return "pencil"
         case .highlighter: return "highlighter"
@@ -65,7 +67,7 @@ public struct DrawingLine: Identifiable, Equatable {
         lineWidth: CGFloat = 5.0,
         opacity: Double = 1.0,
         isEraser: Bool = false,
-        tool: DrawingTool = .pen
+        tool: DrawingTool = .brush
     ) {
         self.id = id
         self.points = points
@@ -238,7 +240,7 @@ public class TracingAppState: ObservableObject {
     @Published public var redoStack: [[DrawingLine]] = []
     
     // Active Brush & Pro Tools
-    @Published public var currentTool: DrawingTool = .pen
+    @Published public var currentTool: DrawingTool = .brush
     @Published public var selectedColor: Color = Color(red: 0.0, green: 0.48, blue: 1.0)
     @Published public var lineWidth: CGFloat = 6.0
     @Published public var brushOpacity: Double = 1.0

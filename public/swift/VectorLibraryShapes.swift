@@ -653,6 +653,378 @@ public struct WrappedCandyShape: Shape {
     }
 }
 
+// MARK: - 16. Rocket Ship Shape
+public struct RocketShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        // Fuselage & Nosecone
+        path.move(to: CGPoint(x: w * 0.5, y: h * 0.08))
+        path.addQuadCurve(to: CGPoint(x: w * 0.68, y: h * 0.65), control: CGPoint(x: w * 0.72, y: h * 0.35))
+        path.addLine(to: CGPoint(x: w * 0.32, y: h * 0.65))
+        path.addQuadCurve(to: CGPoint(x: w * 0.5, y: h * 0.08), control: CGPoint(x: w * 0.28, y: h * 0.35))
+        
+        // Circular Viewport Window
+        let winSize = min(w, h) * 0.16
+        path.addEllipse(in: CGRect(x: w * 0.5 - winSize / 2, y: h * 0.32 - winSize / 2, width: winSize, height: winSize))
+        
+        // Left Fin
+        path.move(to: CGPoint(x: w * 0.34, y: h * 0.52))
+        path.addQuadCurve(to: CGPoint(x: w * 0.14, y: h * 0.78), control: CGPoint(x: w * 0.18, y: h * 0.62))
+        path.addLine(to: CGPoint(x: w * 0.32, y: h * 0.65))
+        
+        // Right Fin
+        path.move(to: CGPoint(x: w * 0.66, y: h * 0.52))
+        path.addQuadCurve(to: CGPoint(x: w * 0.86, y: h * 0.78), control: CGPoint(x: w * 0.82, y: h * 0.62))
+        path.addLine(to: CGPoint(x: w * 0.68, y: h * 0.65))
+        
+        // Thruster Nozzle
+        path.move(to: CGPoint(x: w * 0.38, y: h * 0.65))
+        path.addLine(to: CGPoint(x: w * 0.34, y: h * 0.75))
+        path.addLine(to: CGPoint(x: w * 0.66, y: h * 0.75))
+        path.addLine(to: CGPoint(x: w * 0.62, y: h * 0.65))
+        
+        return path
+    }
+}
+
+// MARK: - 17. Saturn Planet Shape
+public struct PlanetShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let planetRadius = min(w, h) * 0.26
+        
+        // Central Planet Sphere
+        path.addEllipse(in: CGRect(x: center.x - planetRadius, y: center.y - planetRadius, width: planetRadius * 2, height: planetRadius * 2))
+        
+        // Outer Saturnian Ring
+        let ringW = w * 0.88
+        let ringH = h * 0.32
+        let ringTransform = CGAffineTransform(translationX: center.x, y: center.y)
+            .rotated(by: -.pi / 8.0)
+            .translatedBy(x: -center.x, y: -center.y)
+        
+        var ringPath = Path()
+        ringPath.addEllipse(in: CGRect(x: center.x - ringW / 2, y: center.y - ringH / 2, width: ringW, height: ringH))
+        ringPath.addEllipse(in: CGRect(x: center.x - (ringW * 0.82) / 2, y: center.y - (ringH * 0.72) / 2, width: ringW * 0.82, height: ringH * 0.72))
+        path.addPath(ringPath, transform: ringTransform)
+        
+        return path
+    }
+}
+
+// MARK: - 18. Astronaut Helmet Shape
+public struct AstronautShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        // Outer Helmet Dome
+        path.addRoundedRect(in: CGRect(x: w * 0.18, y: h * 0.12, width: w * 0.64, height: h * 0.62), cornerSize: CGSize(width: w * 0.28, height: h * 0.28))
+        
+        // Reflective Visor Oval
+        path.addRoundedRect(in: CGRect(x: w * 0.26, y: h * 0.22, width: w * 0.48, height: h * 0.36), cornerSize: CGSize(width: w * 0.18, height: h * 0.16))
+        
+        // Visor Glare Reflection Arc
+        path.move(to: CGPoint(x: w * 0.34, y: h * 0.28))
+        path.addQuadCurve(to: CGPoint(x: w * 0.44, y: h * 0.26), control: CGPoint(x: w * 0.38, y: h * 0.25))
+        
+        // Left Ear Communication Module
+        path.addRoundedRect(in: CGRect(x: w * 0.11, y: h * 0.32, width: w * 0.07, height: h * 0.22), cornerSize: CGSize(width: 4, height: 4))
+        
+        // Right Ear Communication Module
+        path.addRoundedRect(in: CGRect(x: w * 0.82, y: h * 0.32, width: w * 0.07, height: h * 0.22), cornerSize: CGSize(width: 4, height: 4))
+        
+        // Neck Ring Collar Base
+        path.move(to: CGPoint(x: w * 0.25, y: h * 0.74))
+        path.addLine(to: CGPoint(x: w * 0.20, y: h * 0.88))
+        path.addLine(to: CGPoint(x: w * 0.80, y: h * 0.88))
+        path.addLine(to: CGPoint(x: w * 0.75, y: h * 0.74))
+        path.closeSubpath()
+        
+        return path
+    }
+}
+
+// MARK: - 19. Panda Bear Shape
+public struct PandaShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        // Head Oval
+        path.addEllipse(in: CGRect(x: w * 0.18, y: h * 0.22, width: w * 0.64, height: h * 0.58))
+        
+        // Left Ear
+        path.addEllipse(in: CGRect(x: w * 0.14, y: h * 0.14, width: w * 0.22, height: h * 0.22))
+        
+        // Right Ear
+        path.addEllipse(in: CGRect(x: w * 0.64, y: h * 0.14, width: w * 0.22, height: h * 0.22))
+        
+        // Left Eye Patch
+        path.addEllipse(in: CGRect(x: w * 0.28, y: h * 0.38, width: w * 0.16, height: h * 0.20))
+        path.addEllipse(in: CGRect(x: w * 0.33, y: h * 0.44, width: w * 0.06, height: h * 0.06))
+        
+        // Right Eye Patch
+        path.addEllipse(in: CGRect(x: w * 0.56, y: h * 0.38, width: w * 0.16, height: h * 0.20))
+        path.addEllipse(in: CGRect(x: w * 0.61, y: h * 0.44, width: w * 0.06, height: h * 0.06))
+        
+        // Nose & Snout
+        path.addEllipse(in: CGRect(x: w * 0.45, y: h * 0.56, width: w * 0.10, height: h * 0.07))
+        path.move(to: CGPoint(x: w * 0.50, y: h * 0.63))
+        path.addLine(to: CGPoint(x: w * 0.50, y: h * 0.67))
+        path.addQuadCurve(to: CGPoint(x: w * 0.40, y: h * 0.70), control: CGPoint(x: w * 0.44, y: h * 0.72))
+        path.move(to: CGPoint(x: w * 0.50, y: h * 0.67))
+        path.addQuadCurve(to: CGPoint(x: w * 0.60, y: h * 0.70), control: CGPoint(x: w * 0.56, y: h * 0.72))
+        
+        return path
+    }
+}
+
+// MARK: - 20. Dolphin Shape
+public struct DolphinShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        // Leaping Dolphin Body
+        path.move(to: CGPoint(x: w * 0.88, y: h * 0.48))
+        path.addQuadCurve(to: CGPoint(x: w * 0.55, y: h * 0.20), control: CGPoint(x: w * 0.75, y: h * 0.25))
+        // Dorsal Fin
+        path.addQuadCurve(to: CGPoint(x: w * 0.42, y: h * 0.10), control: CGPoint(x: w * 0.48, y: h * 0.12))
+        path.addQuadCurve(to: CGPoint(x: w * 0.36, y: h * 0.28), control: CGPoint(x: w * 0.40, y: h * 0.22))
+        // Down to Fluke / Tail
+        path.addQuadCurve(to: CGPoint(x: w * 0.12, y: h * 0.70), control: CGPoint(x: w * 0.22, y: h * 0.45))
+        // Flukes
+        path.addLine(to: CGPoint(x: w * 0.05, y: h * 0.64))
+        path.addLine(to: CGPoint(x: w * 0.10, y: h * 0.74))
+        path.addLine(to: CGPoint(x: w * 0.06, y: h * 0.84))
+        path.addLine(to: CGPoint(x: w * 0.16, y: h * 0.76))
+        // Belly & Underbody
+        path.addQuadCurve(to: CGPoint(x: w * 0.45, y: h * 0.58), control: CGPoint(x: w * 0.26, y: h * 0.68))
+        // Flipper
+        path.addLine(to: CGPoint(x: w * 0.48, y: h * 0.74))
+        path.addQuadCurve(to: CGPoint(x: w * 0.56, y: h * 0.56), control: CGPoint(x: w * 0.54, y: h * 0.68))
+        path.addQuadCurve(to: CGPoint(x: w * 0.88, y: h * 0.48), control: CGPoint(x: w * 0.76, y: h * 0.54))
+        
+        // Eye
+        path.addEllipse(in: CGRect(x: w * 0.72, y: h * 0.38, width: w * 0.04, height: w * 0.04))
+        
+        return path
+    }
+}
+
+// MARK: - 21. Butterfly Shape
+public struct ButterflyShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        let cx = rect.midX
+        
+        // Body
+        path.addRoundedRect(in: CGRect(x: cx - w * 0.025, y: h * 0.25, width: w * 0.05, height: h * 0.50), cornerSize: CGSize(width: 4, height: 4))
+        path.addEllipse(in: CGRect(x: cx - w * 0.035, y: h * 0.18, width: w * 0.07, height: h * 0.08))
+        
+        // Antennae
+        path.move(to: CGPoint(x: cx, y: h * 0.20))
+        path.addQuadCurve(to: CGPoint(x: cx - w * 0.16, y: h * 0.08), control: CGPoint(x: cx - w * 0.08, y: h * 0.10))
+        path.move(to: CGPoint(x: cx, y: h * 0.20))
+        path.addQuadCurve(to: CGPoint(x: cx + w * 0.16, y: h * 0.08), control: CGPoint(x: cx + w * 0.08, y: h * 0.10))
+        
+        // Left Upper Wing
+        path.move(to: CGPoint(x: cx - w * 0.025, y: h * 0.32))
+        path.addCurve(to: CGPoint(x: cx - w * 0.44, y: h * 0.18), control1: CGPoint(x: cx - w * 0.15, y: h * 0.10), control2: CGPoint(x: cx - w * 0.35, y: h * 0.08))
+        path.addQuadCurve(to: CGPoint(x: cx - w * 0.025, y: h * 0.52), control: CGPoint(x: cx - w * 0.38, y: h * 0.44))
+        
+        // Left Lower Wing
+        path.move(to: CGPoint(x: cx - w * 0.025, y: h * 0.52))
+        path.addCurve(to: CGPoint(x: cx - w * 0.34, y: h * 0.74), control1: CGPoint(x: cx - w * 0.28, y: h * 0.56), control2: CGPoint(x: cx - w * 0.36, y: h * 0.66))
+        path.addQuadCurve(to: CGPoint(x: cx - w * 0.025, y: h * 0.72), control: CGPoint(x: cx - w * 0.18, y: h * 0.82))
+        
+        // Right Upper Wing
+        path.move(to: CGPoint(x: cx + w * 0.025, y: h * 0.32))
+        path.addCurve(to: CGPoint(x: cx + w * 0.44, y: h * 0.18), control1: CGPoint(x: cx + w * 0.15, y: h * 0.10), control2: CGPoint(x: cx + w * 0.35, y: h * 0.08))
+        path.addQuadCurve(to: CGPoint(x: cx + w * 0.025, y: h * 0.52), control: CGPoint(x: cx + w * 0.38, y: h * 0.44))
+        
+        // Right Lower Wing
+        path.move(to: CGPoint(x: cx + w * 0.025, y: h * 0.52))
+        path.addCurve(to: CGPoint(x: cx + w * 0.34, y: h * 0.74), control1: CGPoint(x: cx + w * 0.28, y: h * 0.56), control2: CGPoint(x: cx + w * 0.36, y: h * 0.66))
+        path.addQuadCurve(to: CGPoint(x: cx + w * 0.025, y: h * 0.72), control: CGPoint(x: cx + w * 0.18, y: h * 0.82))
+        
+        return path
+    }
+}
+
+// MARK: - 22. Bonsai Tree Shape
+public struct BonsaiShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        // Pot Planter
+        path.move(to: CGPoint(x: w * 0.24, y: h * 0.82))
+        path.addLine(to: CGPoint(x: w * 0.76, y: h * 0.82))
+        path.addLine(to: CGPoint(x: w * 0.70, y: h * 0.92))
+        path.addLine(to: CGPoint(x: w * 0.30, y: h * 0.92))
+        path.closeSubpath()
+        
+        // Trunk
+        path.move(to: CGPoint(x: w * 0.46, y: h * 0.82))
+        path.addQuadCurve(to: CGPoint(x: w * 0.40, y: h * 0.55), control: CGPoint(x: w * 0.38, y: h * 0.70))
+        path.addQuadCurve(to: CGPoint(x: w * 0.26, y: h * 0.48), control: CGPoint(x: w * 0.32, y: h * 0.52))
+        path.move(to: CGPoint(x: w * 0.40, y: h * 0.55))
+        path.addQuadCurve(to: CGPoint(x: w * 0.62, y: h * 0.42), control: CGPoint(x: w * 0.48, y: h * 0.48))
+        path.move(to: CGPoint(x: w * 0.54, y: h * 0.82))
+        path.addQuadCurve(to: CGPoint(x: w * 0.46, y: h * 0.55), control: CGPoint(x: w * 0.46, y: h * 0.70))
+        
+        // Foliage Clouds
+        path.addEllipse(in: CGRect(x: w * 0.14, y: h * 0.38, width: w * 0.26, height: h * 0.15))
+        path.addEllipse(in: CGRect(x: w * 0.52, y: h * 0.32, width: w * 0.32, height: h * 0.17))
+        path.addEllipse(in: CGRect(x: w * 0.30, y: h * 0.16, width: w * 0.36, height: h * 0.18))
+        
+        return path
+    }
+}
+
+// MARK: - 23. Faceted Magic Crystal Shape
+public struct CrystalShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        let top = CGPoint(x: w * 0.5, y: h * 0.08)
+        let upperL = CGPoint(x: w * 0.22, y: h * 0.32)
+        let upperR = CGPoint(x: w * 0.78, y: h * 0.32)
+        let lowerL = CGPoint(x: w * 0.26, y: h * 0.72)
+        let lowerR = CGPoint(x: w * 0.74, y: h * 0.72)
+        let bottom = CGPoint(x: w * 0.5, y: h * 0.92)
+        
+        path.move(to: top)
+        path.addLine(to: upperR)
+        path.addLine(to: lowerR)
+        path.addLine(to: bottom)
+        path.addLine(to: lowerL)
+        path.addLine(to: upperL)
+        path.closeSubpath()
+        
+        let midL = CGPoint(x: w * 0.40, y: h * 0.32)
+        let midR = CGPoint(x: w * 0.60, y: h * 0.32)
+        let midLowL = CGPoint(x: w * 0.42, y: h * 0.72)
+        let midLowR = CGPoint(x: w * 0.58, y: h * 0.72)
+        
+        path.move(to: top); path.addLine(to: midL); path.addLine(to: midLowL); path.addLine(to: bottom)
+        path.move(to: top); path.addLine(to: midR); path.addLine(to: midLowR); path.addLine(to: bottom)
+        path.move(to: upperL); path.addLine(to: midL); path.addLine(to: midR); path.addLine(to: upperR)
+        path.move(to: lowerL); path.addLine(to: midLowL); path.addLine(to: midLowR); path.addLine(to: lowerR)
+        
+        return path
+    }
+}
+
+// MARK: - 24. Sailboat Shape
+public struct SailboatShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        // Boat Hull
+        path.move(to: CGPoint(x: w * 0.12, y: h * 0.70))
+        path.addLine(to: CGPoint(x: w * 0.88, y: h * 0.70))
+        path.addQuadCurve(to: CGPoint(x: w * 0.74, y: h * 0.86), control: CGPoint(x: w * 0.82, y: h * 0.84))
+        path.addLine(to: CGPoint(x: w * 0.24, y: h * 0.86))
+        path.addQuadCurve(to: CGPoint(x: w * 0.12, y: h * 0.70), control: CGPoint(x: w * 0.16, y: h * 0.82))
+        path.closeSubpath()
+        
+        // Mast
+        path.move(to: CGPoint(x: w * 0.48, y: h * 0.68))
+        path.addLine(to: CGPoint(x: w * 0.48, y: h * 0.12))
+        
+        // Main Sail
+        path.move(to: CGPoint(x: w * 0.45, y: h * 0.16))
+        path.addLine(to: CGPoint(x: w * 0.18, y: h * 0.62))
+        path.addLine(to: CGPoint(x: w * 0.45, y: h * 0.62))
+        path.closeSubpath()
+        
+        // Jib Sail
+        path.move(to: CGPoint(x: w * 0.51, y: h * 0.20))
+        path.addLine(to: CGPoint(x: w * 0.78, y: h * 0.62))
+        path.addLine(to: CGPoint(x: w * 0.51, y: h * 0.62))
+        path.closeSubpath()
+        
+        // Waterline
+        path.move(to: CGPoint(x: w * 0.08, y: h * 0.92))
+        path.addQuadCurve(to: CGPoint(x: w * 0.92, y: h * 0.92), control: CGPoint(x: w * 0.50, y: h * 0.96))
+        
+        return path
+    }
+}
+
+// MARK: - 25. Airplane Shape
+public struct AirplaneShape: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        let cx = rect.midX
+        
+        // Fuselage & Wings
+        path.move(to: CGPoint(x: cx, y: h * 0.08))
+        path.addQuadCurve(to: CGPoint(x: cx + w * 0.06, y: h * 0.40), control: CGPoint(x: cx + w * 0.08, y: h * 0.20))
+        path.addLine(to: CGPoint(x: w * 0.92, y: h * 0.54))
+        path.addLine(to: CGPoint(x: w * 0.90, y: h * 0.62))
+        path.addLine(to: CGPoint(x: cx + w * 0.06, y: h * 0.56))
+        path.addLine(to: CGPoint(x: cx + w * 0.04, y: h * 0.82))
+        path.addLine(to: CGPoint(x: cx + w * 0.24, y: h * 0.90))
+        path.addLine(to: CGPoint(x: cx + w * 0.22, y: h * 0.94))
+        path.addLine(to: CGPoint(x: cx, y: h * 0.92))
+        path.addLine(to: CGPoint(x: cx - w * 0.22, y: h * 0.94))
+        path.addLine(to: CGPoint(x: cx - w * 0.24, y: h * 0.90))
+        path.addLine(to: CGPoint(x: cx - w * 0.04, y: h * 0.82))
+        path.addLine(to: CGPoint(x: cx - w * 0.06, y: h * 0.56))
+        path.addLine(to: CGPoint(x: w * 0.10, y: h * 0.62))
+        path.addLine(to: CGPoint(x: w * 0.08, y: h * 0.54))
+        path.addLine(to: CGPoint(x: cx - w * 0.06, y: h * 0.40))
+        path.addQuadCurve(to: CGPoint(x: cx, y: h * 0.08), control: CGPoint(x: cx - w * 0.08, y: h * 0.20))
+        path.closeSubpath()
+        
+        path.addArc(center: CGPoint(x: cx, y: h * 0.22), radius: w * 0.04, startAngle: .degrees(180), endAngle: .degrees(0), clockwise: false)
+        
+        return path
+    }
+}
+
 // MARK: - Generic Vector Renderer
 public struct VectorRendererView: View {
     public let shapeType: VectorShapeType
@@ -699,6 +1071,28 @@ public struct VectorRendererView: View {
                 LollipopShape().stroke(strokeColor, style: strokeStyle)
             case .candy:
                 WrappedCandyShape().stroke(strokeColor, style: strokeStyle)
+            case .rocket:
+                RocketShape().stroke(strokeColor, style: strokeStyle)
+            case .planet:
+                PlanetShape().stroke(strokeColor, style: strokeStyle)
+            case .astronaut:
+                AstronautShape().stroke(strokeColor, style: strokeStyle)
+            case .panda:
+                PandaShape().stroke(strokeColor, style: strokeStyle)
+            case .dolphin:
+                DolphinShape().stroke(strokeColor, style: strokeStyle)
+            case .butterfly:
+                ButterflyShape().stroke(strokeColor, style: strokeStyle)
+            case .bonsai:
+                BonsaiShape().stroke(strokeColor, style: strokeStyle)
+            case .crystal:
+                CrystalShape().stroke(strokeColor, style: strokeStyle)
+            case .sailboat:
+                SailboatShape().stroke(strokeColor, style: strokeStyle)
+            case .airplane:
+                AirplaneShape().stroke(strokeColor, style: strokeStyle)
+            @unknown default:
+                StarShape().stroke(strokeColor, style: strokeStyle)
             }
         }
     }

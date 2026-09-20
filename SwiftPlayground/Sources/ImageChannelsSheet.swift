@@ -258,7 +258,7 @@ public struct ImageChannelsSheet: View {
                                     )
                                 .padding(.horizontal, 20)
                             }
-                            .onChange(of: selectedPhotosPickerItem) { newItem in
+                            .onChange(of: selectedPhotosPickerItem) { _, newItem in
                                 guard let item = newItem else { return }
                                 isPhotoLoading = true
                                 Task {

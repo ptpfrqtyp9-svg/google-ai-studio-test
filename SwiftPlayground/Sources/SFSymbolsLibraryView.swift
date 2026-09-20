@@ -157,7 +157,6 @@ public struct SFSymbolCatalogEngine {
         }
         
         // Programmatic Weather & Celestial Matrix
-        let celestialPrefixes = ["sun", "moon", "cloud"]
         let weatherConditions = [
             "sun.max.fill", "sun.min.fill", "sun.horizon.fill", "sun.dust.fill", "sun.haze.fill", "sun.rain.fill", "sun.snow.fill",
             "moon.fill", "moon.circle.fill", "moon.stars.fill", "moon.zzz.fill",
