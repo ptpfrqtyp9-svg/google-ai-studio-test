@@ -13,12 +13,12 @@ public struct DualLayerCanvasView: View {
         GeometryReader { geometry in
             ZStack {
                 // Background Studio Mat / Slate Color
-                Color(red: 0.08, green: 0.08, blue: 0.10)
+                Color(red: 0.980, green: 0.976, blue: 0.961)
                     .ignoresSafeArea()
                 
                 // Subtle Drafting Grid
                 DraftingGridView()
-                    .opacity(0.12)
+                     .opacity(0.10)
                 
                 // LAYER 1: Background Reference Tracing Layer (Underneath)
                 ReferenceLayerContainerView(state: state, bounds: geometry.size)
@@ -52,7 +52,7 @@ public struct DualLayerCanvasView: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(Color.blue.opacity(0.85))
+                        .background(Color(red: 0.961, green: 0.620, blue: 0.043).opacity(0.95))
                         .clipShape(Capsule())
                         .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
                         .padding(.top, 16)
@@ -82,18 +82,15 @@ public struct ReferenceLayerContainerView: View {
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
                     state.dragGestureOffset = value.translation
-                }
-                .onEnded { _ in
-                    state.commitTransform()
                 },
             MagnificationGesture()
                 .onChanged { scale in
                     state.pinchGestureScale = scale
                 }
-                .onEnded { _ in
-                    state.commitTransform()
-                }
         )
+        .onEnded { _ in
+            state.commitTransform()
+        }
     }
     
     public var body: some View {
@@ -104,7 +101,7 @@ public struct ReferenceLayerContainerView: View {
         Group {
             switch state.referenceTarget {
             case let .vector(shapeType):
-                VectorRendererView(shapeType: shapeType, strokeColor: Color.cyan, lineWidth: 4.0)
+                VectorRendererView(shapeType: shapeType, strokeColor: Color(red: 0.145, green: 0.388, blue: 0.922), lineWidth: 3.0)
                     .frame(
                         width: min(bounds.width, bounds.height) * 0.72,
                         height: min(bounds.width, bounds.height) * 0.72
@@ -113,7 +110,7 @@ public struct ReferenceLayerContainerView: View {
                 Image(systemName: symbolName)
                     .resizable()
                     .scaledToFit()
-                    .foregroundColor(Color.cyan)
+                    .foregroundColor(Color(red: 0.145, green: 0.388, blue: 0.922))
                     .frame(
                         width: min(bounds.width, bounds.height) * 0.70,
                         height: min(bounds.width, bounds.height) * 0.70
