@@ -209,6 +209,7 @@ private struct ColorByNumberView: View {
         [nil, nil, nil, nil, nil, 3, 3, nil, nil, nil, nil]
     ]
     private let colors: [Color] = [Color(red: 0.16, green: 0.70, blue: 0.91), Color(red: 1.0, green: 0.79, blue: 0.15), Color(red: 0.18, green: 0.18, blue: 0.21)]
+    private var flattenedGrid: [Int?] { grid.flatMap { $0 } }
 
     var body: some View {
         GeometryReader { geometry in
@@ -337,8 +338,8 @@ private struct ColorByNumberView: View {
 
     private var board: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 11), spacing: 4) {
-            ForEach(Array(grid.joined()).indices, id: \.self) { index in
-                let value = Array(grid.joined())[index]
+            ForEach(flattenedGrid.indices, id: \.self) { index in
+                let value = flattenedGrid[index]
                 Button {
                     if let value, value == selectedNumber {
                         filledCells[index] = value
