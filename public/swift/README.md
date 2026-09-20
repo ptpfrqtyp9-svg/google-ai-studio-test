@@ -1,6 +1,6 @@
-# TraceDraw iOS — High-Performance Tracing & Drawing Application
+# Drawing Studio iOS — High-Performance Tracing & Drawing Application
 
-Complete, native Apple Swift source code for **TraceDraw iOS**, an offline, zero-dependency drawing and tracing application designed for iPadOS & iOS.
+Complete, native Apple Swift source code for **Drawing Studio iOS**, an offline, zero-dependency drawing and tracing application designed for iPadOS & iOS.
 
 ## Architectural Highlights
 - **Dual-Layer Canvas Workspace**: A layered `ZStack` interface where a background reference layer is overlaid by a high-performance CoreGraphics foreground drawing canvas.

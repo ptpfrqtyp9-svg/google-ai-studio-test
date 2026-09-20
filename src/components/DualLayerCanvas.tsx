@@ -332,19 +332,19 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       {isPeeking && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-1.5 bg-cyan-500 text-black text-xs font-bold rounded-full shadow-xl animate-in fade-in zoom-in-95 duration-150">
           <div className="w-2 h-2 rounded-full bg-black animate-ping" />
-          <span>Peeking Reference at 100% Opacity</span>
+          <span>Clear Picture Peek ✨</span>
         </div>
       )}
 
       {/* Active Reference Adjust Notification Pill */}
       {isAdjustingReference && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2 bg-cyan-600/90 backdrop-blur-md rounded-full text-white text-xs font-semibold shadow-lg border border-cyan-400/30">
-          <span>Pan & Scroll/Pinch to Align Template</span>
+          <span>Drag or Pinch to Move & Zoom Picture</span>
           <button
             onClick={onResetTransform}
             className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[11px] font-bold"
           >
-            Reset
+            Reset Center
           </button>
         </div>
       )}

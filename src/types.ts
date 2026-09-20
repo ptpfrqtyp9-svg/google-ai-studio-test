@@ -1,44 +1,74 @@
-export type VectorShapeCategory = 'basics' | 'animals' | 'fruits' | 'sweets' | 'space' | 'nature' | 'vehicles';
+export type VectorShapeCategory =
+  | 'animals-nature'
+  | 'vehicles'
+  | 'fun-games'
+  | 'sports'
+  | 'basics';
 
 export type VectorShapeType =
-  // Basics
-  | 'star'
-  | 'heart'
-  | 'flower'
-  | 'car'
-  // Animals
+  // Animals & Nature
+  | 'butterfly'
+  | 'panda'
+  | 'cat'
   | 'lion'
   | 'bird'
-  | 'cat'
-  | 'panda'
   | 'dolphin'
-  // Fruits
+  | 'dog'
+  | 'rabbit'
+  | 'fish'
+  | 'turtle'
+  | 'bonsai'
+  | 'flower'
+  | 'sun'
+  | 'leaf'
+  | 'rainbow'
   | 'strawberry'
   | 'orange'
   | 'watermelon'
   | 'apple'
-  // Sweets & Candy
-  | 'marshmallow'
-  | 'mnms'
-  | 'lollipop'
-  | 'candy'
-  // Space
+  | 'crystal'
+  // Vehicles
+  | 'car'
+  | 'airplane'
+  | 'sailboat'
   | 'rocket'
   | 'planet'
   | 'astronaut'
-  // Nature & Fantasy
-  | 'butterfly'
-  | 'bonsai'
-  | 'crystal'
-  // Vehicles
-  | 'sailboat'
-  | 'airplane';
+  | 'bicycle'
+  | 'train'
+  // Fun & Games
+  | 'gamepad'
+  | 'dice'
+  | 'crown'
+  | 'gift'
+  | 'balloon'
+  | 'lollipop'
+  | 'candy'
+  | 'marshmallow'
+  | 'mnms'
+  | 'music'
+  // Sports
+  | 'soccer'
+  | 'basketball'
+  | 'tennis'
+  | 'trophy'
+  | 'skateboard'
+  | 'medal'
+  // Basic Shapes
+  | 'star'
+  | 'heart'
+  | 'circle'
+  | 'square'
+  | 'triangle'
+  | 'diamond'
+  | 'cloud';
 
 export interface VectorShapeMetadata {
   type: VectorShapeType;
   name: string;
   category: VectorShapeCategory;
   description: string;
+  icon?: string;
 }
 
 export type DrawingTool = 'pen' | 'pencil' | 'highlighter' | 'eraser';
@@ -74,3 +104,23 @@ export interface ReferenceTransform {
 export type ExportBackgroundMode = 'transparent' | 'darkMat' | 'withTemplate';
 
 export type CompositionGuideMode = 'none' | 'ruleOfThirds' | 'crosshair' | 'dots';
+
+export type AppMode = 'draw' | 'color-by-number';
+
+export interface ColorByNumberPaletteItem {
+  number: number;
+  color: string;
+  name: string;
+}
+
+export interface ColorByNumberTemplate {
+  id: string;
+  name: string;
+  category: string;
+  cols: number;
+  rows: number;
+  palette: ColorByNumberPaletteItem[];
+  // Grid matrix of cell numbers (0 = blank/transparent)
+  grid: number[][];
+}
+

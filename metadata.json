@@ -1,6 +1,6 @@
 {
   "name": "DrawCoach AI",
-  "description": "100% offline dual-layer tracing and drawing application with expanded 25-shape vector library, time-lapse replay, precision analytics, pro drafting tools, and native iOS Swift implementation.",
+  "description": "Offline kid-friendly tracing and drawing studio with clean vector outlines, interactive Color-by-Number pixel grid, crayons, pastels, neon palette, and native iOS Swift implementation.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

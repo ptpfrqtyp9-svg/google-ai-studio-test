@@ -197,7 +197,7 @@ public struct BottomToolbarView: View {
                 Image(systemName: "sparkles")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(.cyan)
-                Text("Target")
+                Text("Drawing")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
             }
@@ -206,7 +206,7 @@ public struct BottomToolbarView: View {
             .background(Color.white.opacity(0.08))
             .clipShape(Capsule())
         }
-        .help("Select Tracing Target from Vector Library, Photos, or Files")
+        .help("Select Drawing from Vector Library, Photos, or Files")
     }
     
     private var alignmentButton: some View {

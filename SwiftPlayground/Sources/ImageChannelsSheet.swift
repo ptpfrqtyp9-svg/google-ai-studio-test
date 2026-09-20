@@ -44,7 +44,7 @@ public struct ImageChannelsSheet: View {
                     VStack(alignment: .leading, spacing: 24) {
                         // Section Header
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Tracing Targets")
+                            Text("Drawing Library")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                             Text("100% offline & local. Choose from vector shapes, curated SF symbols, photo library, or files.")
@@ -391,7 +391,7 @@ public struct ImageChannelsSheet: View {
                     .padding(.vertical, 20)
                 }
             }
-            .navigationTitle("Import Target")
+            .navigationTitle("Select Drawing")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

@@ -274,14 +274,14 @@ export const ExportPhotoModal: React.FC<ExportPhotoModalProps> = ({
       // Convert dataUrl to File blob
       const res = await fetch(previewDataUrl);
       const blob = await res.blob();
-      const file = new File([blob], `TraceDraw-${Date.now()}.png`, { type: 'image/png' });
+      const file = new File([blob], `Drawing-${Date.now()}.png`, { type: 'image/png' });
 
       // Check for Web Share API (Supported on iOS Safari & iPadOS for Photos)
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'TraceDraw Artwork',
-          text: 'My tracing artwork created with TraceDraw iOS',
+          title: 'Drawing Artwork',
+          text: 'My artwork created with Drawing Studio',
         });
         setSavedStatus('Opened iOS Share Sheet!');
         setTimeout(() => setSavedStatus(null), 3500);
@@ -300,7 +300,7 @@ export const ExportPhotoModal: React.FC<ExportPhotoModalProps> = ({
   const handleDirectDownload = () => {
     if (!previewDataUrl) return;
     const link = document.createElement('a');
-    link.download = `TraceDraw-Artwork-${Date.now()}.png`;
+    link.download = `Drawing-Artwork-${Date.now()}.png`;
     link.href = previewDataUrl;
     link.click();
     setSavedStatus('Image saved to downloads!');

@@ -4,15 +4,15 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "TraceDraw",
+    name: "DrawingStudio",
     platforms: [
         .iOS("16.0")
     ],
     products: [
         .iOSApplication(
-            name: "TraceDraw iOS",
+            name: "Drawing Studio iOS",
             targets: ["AppModule"],
-            bundleIdentifier: "com.apple.expert.tracedraw",
+            bundleIdentifier: "com.apple.expert.drawingstudio",
             teamIdentifier: "",
             displayVersion: "1.1",
             bundleVersion: "2",

@@ -246,7 +246,7 @@ public class TracingAppState: ObservableObject {
     @Published public var brushOpacity: Double = 1.0
     
     // Reference Layer State
-    @Published public var referenceTarget: ReferenceTarget = .vector(.star)
+    @Published public var referenceTarget: ReferenceTarget
     @Published public var isReferenceVisible: Bool = true
     @Published public var referenceOpacity: Double = 0.45
     @Published public var lastActiveReferenceOpacity: Double = 0.45
@@ -258,6 +258,21 @@ public class TracingAppState: ObservableObject {
     @Published public var referenceTransform: ReferenceLayerTransform = ReferenceLayerTransform()
     @Published public var dragGestureOffset: CGSize = .zero
     @Published public var pinchGestureScale: CGFloat = 1.0
+    
+    // Initializer with random initial target
+    public init(initialTarget: ReferenceTarget? = nil) {
+        if let target = initialTarget {
+            self.referenceTarget = target
+        } else if let randomShape = VectorShapeType.allCases.randomElement() {
+            self.referenceTarget = .vector(randomShape)
+        } else {
+            self.referenceTarget = .vector(.star)
+        }
+    }
+    
+    public static func generateRandomOptions(count: Int = 3) -> [VectorShapeType] {
+        Array(VectorShapeType.allCases.shuffled().prefix(count))
+    }
     
     // Preset Vibrant Color Palette
     public let vibrantColors: [Color] = [
@@ -387,10 +402,19 @@ public class TracingAppState: ObservableObject {
         pinchGestureScale = 1.0
     }
     
-    // MARK: - Target Switching
+    // MARK: - Drawing Board Auto-Erase & Target Switching
+    
+    public func eraseBoard() {
+        lines.removeAll()
+        currentLine = nil
+        undoStack.removeAll()
+        redoStack.removeAll()
+    }
     
     public func setVectorTarget(_ type: VectorShapeType) {
         referenceTarget = .vector(type)
+        eraseBoard()
+        resetReferenceTransform()
         if referenceOpacity == 0 {
             referenceOpacity = lastActiveReferenceOpacity
             isReferenceVisible = true
@@ -399,6 +423,8 @@ public class TracingAppState: ObservableObject {
     
     public func setSymbolTarget(_ symbolName: String) {
         referenceTarget = .symbol(symbolName)
+        eraseBoard()
+        resetReferenceTransform()
         if referenceOpacity == 0 {
             referenceOpacity = lastActiveReferenceOpacity
             isReferenceVisible = true
@@ -407,6 +433,7 @@ public class TracingAppState: ObservableObject {
     
     public func setImageTarget(_ image: UIImage) {
         referenceTarget = .image(image)
+        eraseBoard()
         resetReferenceTransform()
         if referenceOpacity == 0 {
             referenceOpacity = lastActiveReferenceOpacity

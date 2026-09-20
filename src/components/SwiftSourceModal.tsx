@@ -246,11 +246,11 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "TraceDraw",
+    name: "DrawingStudio",
     platforms: [.iOS("16.0")],
     products: [
         .iOSApplication(
-            name: "TraceDraw iOS",
+            name: "Drawing Studio iOS",
             targets: ["AppModule"],
             capabilities: [.photoLibrary(purposeString: "Import reference photos")]
         )
@@ -297,7 +297,7 @@ export const SwiftSourceModal: React.FC<SwiftSourceModalProps> = ({ isOpen, onCl
           <div className="flex items-center gap-2">
             <a
               href="/SwiftFiles.zip"
-              download="TraceDraw_SwiftFiles.zip"
+              download="DrawingStudio_SwiftFiles.zip"
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold transition-colors shadow-lg shadow-cyan-500/20"
             >
               <Download className="w-3.5 h-3.5" />
