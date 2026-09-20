@@ -260,34 +260,15 @@ private struct ColorByNumberView: View {
                     .padding(.horizontal, 28)
                     .padding(.top, 54)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 28) {
-                            VStack(spacing: 16) {
-                                picturePicker
-                                guidePanel
-                                numberPicker
-                                HStack(spacing: 12) {
-                                    utilityButton("tablecells", title: isGridVisible ? "Hide Grid" : "Show Grid") {
-                                        isGridVisible.toggle()
-                                    }
-                                    utilityButton("lightbulb.fill", title: "Hint") {
-                                        revealHint()
-                                    }
-                                }
-                                if isHintVisible {
-                                    Text("Pick number \(selectedNumber), then tap every matching square.")
-                                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                                        .foregroundColor(.orange)
-                                        .multilineTextAlignment(.center)
-                                        .frame(maxWidth: 190)
-                                }
-                            }
-                            board
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 24)
+                    HStack(alignment: .center, spacing: 28) {
+                        board
+                            .frame(maxWidth: .infinity, alignment: .center)
+
+                        colorNumberSidebar
+                            .frame(width: 220)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .frame(maxWidth: 980, maxHeight: .infinity, alignment: .center)
+                    .padding(.horizontal, 24)
                     Spacer(minLength: 10)
                 }
             }
@@ -361,6 +342,27 @@ private struct ColorByNumberView: View {
         Text("\(number)").font(.system(size: 12, weight: .black, design: .rounded)).foregroundColor(.white).frame(width: 26, height: 26).background(color).clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2))
     }
 
+    private var colorNumberSidebar: some View {
+        VStack(spacing: 16) {
+            guidePanel
+            numberPicker
+            HStack(spacing: 12) {
+                utilityButton("tablecells", title: isGridVisible ? "Hide Grid" : "Show Grid") {
+                    isGridVisible.toggle()
+                }
+                utilityButton("lightbulb.fill", title: "Hint") {
+                    revealHint()
+                }
+            }
+            if isHintVisible {
+                Text("Color the highlighted number. The next color unlocks automatically.")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundColor(.orange)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+
     private var numberPicker: some View {
         HStack(spacing: 10) {
             ForEach(1...3, id: \.self) { number in
@@ -398,6 +400,7 @@ private struct ColorByNumberView: View {
         return Button {
             guard let value, value == selectedNumber else { return }
             filledCells[index] = value
+            advanceAfterCompleting(number: value)
         } label: {
             Group {
                 if let value {
@@ -417,6 +420,23 @@ private struct ColorByNumberView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private func advanceAfterCompleting(number: Int) {
+        let cellsForNumber = flattenedGrid.enumerated().compactMap { index, value in
+            value == number ? index : nil
+        }
+        let isComplete = !cellsForNumber.isEmpty && cellsForNumber.allSatisfy { filledCells[$0] == number }
+        guard isComplete else { return }
+
+        if let nextNumber = (number + 1...3).first(where: { candidate in
+            flattenedGrid.contains(candidate) && !flattenedGrid.enumerated().contains { index, value in
+                value == candidate && filledCells[index] == candidate
+            }
+        }) {
+            selectedNumber = nextNumber
+            isHintVisible = false
+        }
     }
 
     private func revealHint() {
