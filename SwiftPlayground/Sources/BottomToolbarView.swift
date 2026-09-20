@@ -41,11 +41,11 @@ public struct BottomToolbarView: View {
             colorSwatchesRow
         }
         .padding(16)
-        .background(Color(red: 0.14, green: 0.14, blue: 0.16).opacity(0.95))
+        .background(Color.white.opacity(0.96))
         .cornerRadius(22)
         .overlay(
             RoundedRectangle(cornerRadius: 22)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .stroke(Color(red: 0.961, green: 0.620, blue: 0.043).opacity(0.30), lineWidth: 1)
         )
         .padding(.horizontal, 16)
         .transition(.scale.combined(with: .opacity))
@@ -55,16 +55,16 @@ public struct BottomToolbarView: View {
         HStack(spacing: 12) {
             Image(systemName: "pencil.tip")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.gray)
+                foregroundColor(Color(red: 0.35, green: 0.35, blue: 0.38))
                 .frame(width: 20)
             
             Text("Thickness")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(Color(red: 0.11, green: 0.11, blue: 0.13))
                 .frame(width: 75, alignment: .leading)
             
             Slider(value: $state.lineWidth, in: 1...40, step: 1)
-                .tint(.blue)
+                .tint(Color(red: 0.961, green: 0.620, blue: 0.043))
             
             Text("\(Int(state.lineWidth)) pt")
                 .font(.system(size: 12, weight: .bold, design: .monospaced))
@@ -124,7 +124,7 @@ public struct BottomToolbarView: View {
         HStack(spacing: 12) {
             Image(systemName: "slider.horizontal.3")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.cyan)
+                foregroundColor(Color(red: 0.961, green: 0.620, blue: 0.043))
             
             Text("Template Alpha")
                 .font(.system(size: 13, weight: .semibold))
@@ -178,11 +178,11 @@ public struct BottomToolbarView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(Color(red: 0.12, green: 0.12, blue: 0.14).opacity(0.95))
+        .background(Color.white.opacity(0.96))
         .clipShape(Capsule())
         .overlay(
             Capsule()
-                .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                .stroke(Color(red: 0.961, green: 0.620, blue: 0.043).opacity(0.45), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.5), radius: 16, y: 6)
         .padding(.horizontal, 16)
@@ -281,7 +281,7 @@ public struct BottomToolbarView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(state.currentTool == .brush ? Color.white : Color.white.opacity(0.08))
+            .background(state.currentTool == .brush ? Color(red: 0.961, green: 0.620, blue: 0.043) : Color.black.opacity(0.05))
             .clipShape(Capsule())
         }
         .help("Brush Tool & Vibrant Color Swatches")
