@@ -190,6 +190,9 @@ private struct ColorByNumberView: View {
     let openLibrary: () -> Void
     @State private var selectedNumber = 1
     @State private var filledCells: [Int: Int] = [:]
+    @State private var selectedPicture: VectorShapeType = .star
+    @State private var isGridVisible = true
+    @State private var isHintVisible = false
     private let grid: [[Int?]] = [
         [nil, nil, nil, 1, 1, 1, nil, nil, 1, 1, nil],
         [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
@@ -227,11 +230,23 @@ private struct ColorByNumberView: View {
 
                     HStack(alignment: .top, spacing: 28) {
                         VStack(spacing: 16) {
+                            picturePicker
                             guidePanel
                             numberPicker
                             HStack(spacing: 12) {
-                                utilityButton("tablecells", title: "Grid")
-                                utilityButton("lightbulb", title: "Hint")
+                                utilityButton("tablecells", title: isGridVisible ? "Hide Grid" : "Show Grid") {
+                                    isGridVisible.toggle()
+                                }
+                                utilityButton("lightbulb.fill", title: "Hint") {
+                                    revealHint()
+                                }
+                            }
+                            if isHintVisible {
+                                Text("Pick number \(selectedNumber), then tap every matching square.")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(.orange)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: 190)
                             }
                         }
                         board
@@ -241,6 +256,40 @@ private struct ColorByNumberView: View {
                 }
             }
         }
+    }
+
+    private var picturePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("PICK A PICTURE")
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundColor(studioInk)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(VectorShapeType.allCases, id: \.self) { shape in
+                        Button {
+                            selectedPicture = shape
+                            filledCells.removeAll()
+                            state.setVectorTarget(shape)
+                        } label: {
+                            VStack(spacing: 4) {
+                                VectorRendererView(shapeType: shape, strokeColor: colors[0], lineWidth: 2)
+                                    .frame(width: 52, height: 42)
+                                Text(shape.displayName)
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .lineLimit(1)
+                            }
+                            .foregroundColor(studioInk)
+                            .padding(6)
+                            .background(selectedPicture == shape ? Color.cyan.opacity(0.18) : Color.white.opacity(0.9))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(selectedPicture == shape ? .cyan : .clear, lineWidth: 2))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 12)
     }
 
     private var guidePanel: some View {
