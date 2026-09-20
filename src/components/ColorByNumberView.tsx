@@ -408,23 +408,22 @@ export const ColorByNumberView: React.FC<ColorByNumberViewProps> = ({
               Picture Guide
             </div>
             <div
-              className="bg-white rounded-lg p-1 shadow-inner grid gap-[1px]"
+              className="bg-white rounded-lg p-1.5 shadow-inner grid gap-[1.5px] aspect-square w-[130px] h-[130px]"
               style={{
                 gridTemplateColumns: `repeat(${currentTemplate.cols}, minmax(0, 1fr))`,
-                width: '130px',
-                height: '130px',
+                gridTemplateRows: `repeat(${currentTemplate.rows}, minmax(0, 1fr))`,
               }}
             >
               {currentTemplate.grid.map((row, r) =>
                 row.map((val, c) => {
                   if (val === 0) {
-                    return <div key={`${r}-${c}`} className="bg-white" />;
+                    return <div key={`${r}-${c}`} className="w-full h-full aspect-square bg-white" />;
                   }
                   const colorItem = currentTemplate.palette.find((p) => p.number === val);
                   return (
                     <div
                       key={`${r}-${c}`}
-                      className="w-full h-full flex items-center justify-center text-[7px] font-bold text-black/50"
+                      className="w-full h-full aspect-square flex items-center justify-center text-[7px] font-bold text-black/60 rounded-[1px]"
                       style={{ backgroundColor: colorItem?.color || '#cbd5e1' }}
                     >
                       {val}
@@ -520,13 +519,12 @@ export const ColorByNumberView: React.FC<ColorByNumberViewProps> = ({
           onTouchEnd={() => (isMouseDownRef.current = false)}
         >
           <div
-            className={`bg-white rounded-2xl p-1 sm:p-2 shadow-2xl grid gap-[2px] sm:gap-[3px] select-none ${
+            className={`bg-white rounded-2xl p-1.5 sm:p-2.5 shadow-2xl grid gap-[2px] sm:gap-[3px] select-none aspect-square w-[min(84vw,440px)] h-[min(84vw,440px)] ${
               showGridLines ? 'border border-gray-400/40' : ''
             }`}
             style={{
               gridTemplateColumns: `repeat(${currentTemplate.cols}, minmax(0, 1fr))`,
-              width: 'min(80vw, 440px)',
-              height: 'min(80vw, 440px)',
+              gridTemplateRows: `repeat(${currentTemplate.rows}, minmax(0, 1fr))`,
             }}
           >
             {currentTemplate.grid.map((row, r) =>
@@ -544,7 +542,7 @@ export const ColorByNumberView: React.FC<ColorByNumberViewProps> = ({
                   return (
                     <div
                       key={`grid-${r}-${c}`}
-                      className="w-full h-full bg-[#f8fafc] rounded-sm pointer-events-none"
+                      className="w-full h-full aspect-square bg-[#f8fafc] rounded-sm pointer-events-none"
                     />
                   );
                 }
@@ -559,7 +557,7 @@ export const ColorByNumberView: React.FC<ColorByNumberViewProps> = ({
                       }
                     }}
                     onTouchStart={() => handleColorCell(r, c)}
-                    className={`w-full h-full rounded-sm flex items-center justify-center font-black transition-all relative ${
+                    className={`w-full h-full aspect-square rounded-sm flex items-center justify-center font-black transition-all relative ${
                       showGridLines ? 'border border-gray-300' : ''
                     } ${
                       isFilled

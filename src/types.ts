@@ -105,7 +105,11 @@ export type ExportBackgroundMode = 'transparent' | 'darkMat' | 'withTemplate';
 
 export type CompositionGuideMode = 'none' | 'ruleOfThirds' | 'crosshair' | 'dots';
 
-export type AppMode = 'draw' | 'color-by-number';
+export type AppMode = 'free-draw' | 'color-by-number';
+
+export type CanvasTheme = 'paper' | 'sunshine' | 'blossom' | 'ocean' | 'night';
+
+export type EraserSize = 'small' | 'medium' | 'large';
 
 export interface ColorByNumberPaletteItem {
   number: number;

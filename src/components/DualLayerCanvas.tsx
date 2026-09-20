@@ -1,5 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { CompositionGuideMode, DrawingLine, ReferenceTarget, ReferenceTransform, StrokePoint } from '../types';
+import {
+  CanvasTheme,
+  CompositionGuideMode,
+  DrawingLine,
+  DrawingTool,
+  EraserSize,
+  ReferenceTarget,
+  ReferenceTransform,
+  StrokePoint,
+} from '../types';
 import { VectorShape } from './VectorShapes';
 
 interface DualLayerCanvasProps {
@@ -15,7 +24,64 @@ interface DualLayerCanvasProps {
   onUpdateTransform: (transform: ReferenceTransform) => void;
   onResetTransform: () => void;
   guideMode?: CompositionGuideMode;
-  isPeeking?: boolean;
+  currentTool?: DrawingTool;
+  eraserSize?: EraserSize;
+  onEraseStrokes?: (strokeIds: string[]) => void;
+  currentTheme?: CanvasTheme;
+}
+
+// Helper: Calculate distance squared from point (px, py) to line segment (x1, y1)-(x2, y2)
+function distToSegmentSquared(
+  px: number,
+  py: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): number {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const l2 = dx * dx + dy * dy;
+  if (l2 === 0) {
+    const dpx = px - x1;
+    const dpy = py - y1;
+    return dpx * dpx + dpy * dpy;
+  }
+  let t = ((px - x1) * dx + (py - y1) * dy) / l2;
+  t = Math.max(0, Math.min(1, t));
+  const projX = x1 + t * dx;
+  const projY = y1 + t * dy;
+  const diffX = px - projX;
+  const diffY = py - projY;
+  return diffX * diffX + diffY * diffY;
+}
+
+function strokeIntersectsCircle(
+  line: DrawingLine,
+  px: number,
+  py: number,
+  radius: number
+): boolean {
+  if (line.points.length === 0) return false;
+  const hitThreshold = radius + line.lineWidth / 2;
+  const hitThresholdSq = hitThreshold * hitThreshold;
+
+  if (line.points.length === 1) {
+    const pt = line.points[0];
+    const dx = px - pt.x;
+    const dy = py - pt.y;
+    return dx * dx + dy * dy <= hitThresholdSq;
+  }
+
+  for (let i = 1; i < line.points.length; i++) {
+    const p1 = line.points[i - 1];
+    const p2 = line.points[i];
+    const d2 = distToSegmentSquared(px, py, p1.x, p1.y, p2.x, p2.y);
+    if (d2 <= hitThresholdSq) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
@@ -31,7 +97,10 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
   onUpdateTransform,
   onResetTransform,
   guideMode = 'none',
-  isPeeking = false,
+  currentTool = 'pen',
+  eraserSize = 'medium',
+  onEraseStrokes,
+  currentTheme = 'paper',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,8 +109,8 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
     height: 600,
   });
 
-  // Effective template opacity (jumps to 1.0 when user is holding Peek button)
-  const effectiveReferenceOpacity = isPeeking ? 1.0 : referenceOpacity;
+  // Eraser cursor position for visual feedback
+  const [eraserCursor, setEraserCursor] = useState<{ x: number; y: number } | null>(null);
 
   // Dragging template state when in adjust mode
   const [isDraggingTemplate, setIsDraggingTemplate] = useState(false);
@@ -51,6 +120,10 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
     initX: 0,
     initY: 0,
   });
+
+  // Determine eraser radius
+  const eraserRadius =
+    eraserSize === 'small' ? 16 : eraserSize === 'large' ? 45 : 28;
 
   // Track canvas container sizing
   useEffect(() => {
@@ -67,6 +140,51 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
   }, []);
+
+  // Theme configuration for lively kid background & vector stroke color
+  const themeConfig = {
+    paper: {
+      bg: 'bg-[#faf9f5]',
+      grid: 'radial-gradient(#d97706 1.2px, transparent 1.2px)',
+      gridOpacity: 'opacity-10',
+      vectorStroke: '#2563eb', // Royal Blue outline for high contrast on paper
+      shadow: 'drop-shadow-[0_0_12px_rgba(37,99,235,0.25)]',
+    },
+    sunshine: {
+      bg: 'bg-[#fffdf2]',
+      grid: 'radial-gradient(#eab308 1.4px, transparent 1.4px)',
+      gridOpacity: 'opacity-15',
+      vectorStroke: '#dc2626', // Crimson Red outline
+      shadow: 'drop-shadow-[0_0_12px_rgba(220,38,38,0.25)]',
+    },
+    blossom: {
+      bg: 'bg-[#fdf4f8]',
+      grid: 'radial-gradient(#ec4899 1.4px, transparent 1.4px)',
+      gridOpacity: 'opacity-12',
+      vectorStroke: '#9333ea', // Grape Purple outline
+      shadow: 'drop-shadow-[0_0_12px_rgba(147,51,234,0.25)]',
+    },
+    ocean: {
+      bg: 'bg-[#f0f9ff]',
+      grid: 'radial-gradient(#0284c7 1.4px, transparent 1.4px)',
+      gridOpacity: 'opacity-12',
+      vectorStroke: '#1d4ed8', // Deep Blue outline
+      shadow: 'drop-shadow-[0_0_12px_rgba(29,78,216,0.25)]',
+    },
+    night: {
+      bg: 'bg-[#0f172a]',
+      grid: 'radial-gradient(#38bdf8 1.2px, transparent 1.2px)',
+      gridOpacity: 'opacity-20',
+      vectorStroke: '#22d3ee', // Glowing Cyan outline for dark theme
+      shadow: 'drop-shadow-[0_0_12px_rgba(34,211,238,0.4)]',
+    },
+  }[currentTheme] || {
+    bg: 'bg-[#faf9f5]',
+    grid: 'radial-gradient(#d97706 1.2px, transparent 1.2px)',
+    gridOpacity: 'opacity-10',
+    vectorStroke: '#2563eb',
+    shadow: 'drop-shadow-[0_0_12px_rgba(37,99,235,0.25)]',
+  };
 
   // Redraw canvas whenever lines, active stroke, or dimension changes
   const renderCanvas = useCallback(() => {
@@ -89,17 +207,10 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
 
     // Draw lines function
     const drawStroke = (line: DrawingLine) => {
-      if (line.points.length === 0) return;
+      if (line.points.length === 0 || line.isEraser) return;
       ctx.save();
 
-      if (line.isEraser) {
-        // Pixel-accurate eraser: cuts only from foreground drawing layer!
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = line.lineWidth;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-      } else if (line.tool === 'highlighter') {
+      if (line.tool === 'highlighter') {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = line.color;
         ctx.globalAlpha = Math.min(line.opacity * 0.45, 0.55);
@@ -127,7 +238,7 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       if (line.points.length === 1) {
         const pt = line.points[0];
         ctx.arc(pt.x, pt.y, line.lineWidth / 2, 0, Math.PI * 2);
-        ctx.fillStyle = line.isEraser ? '#000000' : line.color;
+        ctx.fillStyle = line.color;
         ctx.fill();
       } else {
         ctx.moveTo(line.points[0].x, line.points[0].y);
@@ -150,16 +261,33 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
     lines.forEach(drawStroke);
 
     // Draw active drawing stroke
-    if (currentLine) {
+    if (currentLine && currentTool !== 'eraser') {
       drawStroke(currentLine);
     }
-  }, [lines, currentLine, containerDimensions]);
+  }, [lines, currentLine, containerDimensions, currentTool]);
 
   useEffect(() => {
     renderCanvas();
   }, [renderCanvas]);
 
-  // Pointer event handlers for drawing on Layer 2
+  // Handle Object Eraser stroke deletion
+  const checkObjectEraserHits = useCallback(
+    (point: StrokePoint) => {
+      if (!onEraseStrokes || lines.length === 0) return;
+      const hitIds: string[] = [];
+      lines.forEach((line) => {
+        if (strokeIntersectsCircle(line, point.x, point.y, eraserRadius)) {
+          hitIds.push(line.id);
+        }
+      });
+      if (hitIds.length > 0) {
+        onEraseStrokes(hitIds);
+      }
+    },
+    [lines, eraserRadius, onEraseStrokes]
+  );
+
+  // Pointer event handlers for drawing or object erasing
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (isAdjustingReference) return;
     const canvas = canvasRef.current;
@@ -170,11 +298,17 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       y: e.clientY - rect.top,
     };
     canvas.setPointerCapture(e.pointerId);
-    onStartLine(point);
+
+    if (currentTool === 'eraser') {
+      setEraserCursor(point);
+      checkObjectEraserHits(point);
+    } else {
+      onStartLine(point);
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (isAdjustingReference || !currentLine) return;
+    if (isAdjustingReference) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -182,7 +316,16 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     };
-    onAppendPoint(point);
+
+    if (currentTool === 'eraser') {
+      setEraserCursor(point);
+      // If pointer is down (buttons > 0) or user is dragging, erase intersected strokes
+      if (e.buttons > 0) {
+        checkObjectEraserHits(point);
+      }
+    } else if (currentLine) {
+      onAppendPoint(point);
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -191,7 +334,18 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
     if (canvas && canvas.hasPointerCapture(e.pointerId)) {
       canvas.releasePointerCapture(e.pointerId);
     }
-    onEndLine();
+
+    if (currentTool === 'eraser') {
+      // Keep or clear eraser cursor on release
+    } else {
+      onEndLine();
+    }
+  };
+
+  const handlePointerLeave = () => {
+    if (currentTool === 'eraser') {
+      setEraserCursor(null);
+    }
   };
 
   // Dragging reference layer when in template adjustment mode
@@ -238,35 +392,32 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
     <div
       ref={containerRef}
       id="dual-layer-workspace"
-      className="relative w-full h-full overflow-hidden bg-[#111115] select-none touch-none"
+      className={`relative w-full h-full overflow-hidden ${themeConfig.bg} select-none touch-none transition-colors duration-300`}
       onPointerMove={isAdjustingReference ? handleTemplatePointerMove : undefined}
       onPointerUp={isAdjustingReference ? handleTemplatePointerUp : undefined}
       onWheel={isAdjustingReference ? handleWheelZoom : undefined}
     >
-      {/* Background Studio Drafting Grid */}
+      {/* Lively Background Studio Grid / Dots */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-10"
+        className={`absolute inset-0 pointer-events-none ${themeConfig.gridOpacity}`}
         style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(255, 255, 255, 0.25) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.25) 1px, transparent 1px)
-          `,
-          backgroundSize: '32px 32px',
+          backgroundImage: themeConfig.grid,
+          backgroundSize: '28px 28px',
         }}
       />
 
       {/* Composition Guides Overlay */}
       {guideMode === 'ruleOfThirds' && (
         <div className="absolute inset-0 pointer-events-none z-15">
-          <div className="w-full h-full grid grid-cols-3 grid-rows-3 border border-cyan-500/20">
-            <div className="border-r border-b border-cyan-500/25" />
-            <div className="border-r border-b border-cyan-500/25" />
-            <div className="border-b border-cyan-500/25" />
-            <div className="border-r border-b border-cyan-500/25" />
-            <div className="border-r border-b border-cyan-500/25" />
-            <div className="border-b border-cyan-500/25" />
-            <div className="border-r border-cyan-500/25" />
-            <div className="border-r border-cyan-500/25" />
+          <div className="w-full h-full grid grid-cols-3 grid-rows-3 border border-sky-400/30">
+            <div className="border-r border-b border-sky-400/25" />
+            <div className="border-r border-b border-sky-400/25" />
+            <div className="border-b border-sky-400/25" />
+            <div className="border-r border-b border-sky-400/25" />
+            <div className="border-r border-b border-sky-400/25" />
+            <div className="border-b border-sky-400/25" />
+            <div className="border-r border-b border-sky-400/25" />
+            <div className="border-r border-b border-sky-400/25" />
             <div />
           </div>
         </div>
@@ -274,9 +425,9 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
 
       {guideMode === 'crosshair' && (
         <div className="absolute inset-0 pointer-events-none z-15 flex items-center justify-center">
-          <div className="absolute left-0 right-0 h-px bg-cyan-500/30" />
-          <div className="absolute top-0 bottom-0 w-px bg-cyan-500/30" />
-          <div className="w-8 h-8 rounded-full border border-cyan-400/40" />
+          <div className="absolute left-0 right-0 h-px bg-sky-400/30" />
+          <div className="absolute top-0 bottom-0 w-px bg-sky-400/30" />
+          <div className="w-8 h-8 rounded-full border border-sky-400/40" />
         </div>
       )}
 
@@ -284,7 +435,7 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
         <div
           className="absolute inset-0 pointer-events-none z-15 opacity-25"
           style={{
-            backgroundImage: 'radial-gradient(#22d3ee 1.5px, transparent 1.5px)',
+            backgroundImage: 'radial-gradient(#3b82f6 1.5px, transparent 1.5px)',
             backgroundSize: '36px 36px',
           }}
         />
@@ -295,7 +446,7 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
         id="reference-layer"
         className="absolute inset-0 flex items-center justify-center transition-opacity duration-200"
         style={{
-          opacity: effectiveReferenceOpacity,
+          opacity: referenceOpacity,
           pointerEvents: isAdjustingReference ? 'auto' : 'none',
           cursor: isAdjustingReference ? 'grab' : 'default',
         }}
@@ -312,37 +463,29 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
             <div className="w-[320px] h-[320px] sm:w-[420px] sm:h-[420px]">
               <VectorShape
                 type={referenceTarget.vectorShape}
-                strokeColor="#22d3ee"
-                strokeWidth={3.5}
-                className="w-full h-full filter drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]"
+                strokeColor={themeConfig.vectorStroke}
+                strokeWidth={3.8}
+                className={`w-full h-full filter ${themeConfig.shadow}`}
               />
             </div>
           ) : referenceTarget.imageSrc ? (
             <img
               src={referenceTarget.imageSrc}
-              alt={referenceTarget.imageName || 'Reference Target'}
-              className="max-w-[85vw] max-h-[75vh] object-contain select-none pointer-events-none shadow-2xl rounded-lg"
+              alt={referenceTarget.imageName || 'Tracing Picture'}
+              className="max-w-[85vw] max-h-[75vh] object-contain select-none pointer-events-none shadow-2xl rounded-2xl"
               draggable={false}
             />
           ) : null}
         </div>
       </div>
 
-      {/* Active Peeking Indicator */}
-      {isPeeking && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-1.5 bg-cyan-500 text-black text-xs font-bold rounded-full shadow-xl animate-in fade-in zoom-in-95 duration-150">
-          <div className="w-2 h-2 rounded-full bg-black animate-ping" />
-          <span>Clear Picture Peek ✨</span>
-        </div>
-      )}
-
-      {/* Active Reference Adjust Notification Pill */}
+      {/* Active Reference Move & Zoom Notification Pill */}
       {isAdjustingReference && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2 bg-cyan-600/90 backdrop-blur-md rounded-full text-white text-xs font-semibold shadow-lg border border-cyan-400/30">
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-full shadow-xl border border-amber-300">
           <span>Drag or Pinch to Move & Zoom Picture</span>
           <button
             onClick={onResetTransform}
-            className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[11px] font-bold"
+            className="px-2.5 py-0.5 bg-black/20 hover:bg-black/30 rounded-full text-[11px] font-extrabold"
           >
             Reset Center
           </button>
@@ -353,7 +496,9 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       <canvas
         ref={canvasRef}
         id="drawing-canvas-layer"
-        className="absolute inset-0 w-full h-full cursor-crosshair touch-none z-10"
+        className={`absolute inset-0 w-full h-full touch-none z-10 ${
+          currentTool === 'eraser' ? 'cursor-none' : 'cursor-crosshair'
+        }`}
         style={{
           pointerEvents: isAdjustingReference ? 'none' : 'auto',
         }}
@@ -361,7 +506,23 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
       />
+
+      {/* Object Eraser Circular Floating Cursor Ring */}
+      {currentTool === 'eraser' && eraserCursor && !isAdjustingReference && (
+        <div
+          className="pointer-events-none absolute rounded-full border-2 border-rose-500 bg-rose-500/25 shadow-lg flex items-center justify-center -translate-x-1/2 -translate-y-1/2 z-30 transition-none animate-in fade-in zoom-in-75 duration-75"
+          style={{
+            left: eraserCursor.x,
+            top: eraserCursor.y,
+            width: eraserRadius * 2,
+            height: eraserRadius * 2,
+          }}
+        >
+          <span className="text-[11px] select-none">🧹</span>
+        </div>
+      )}
     </div>
   );
 };
