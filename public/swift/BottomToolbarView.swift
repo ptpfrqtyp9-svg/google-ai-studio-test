@@ -8,7 +8,6 @@ public struct BottomToolbarView: View {
     @Binding public var isExportPresented: Bool
     
     @State private var isBrushKitExpanded: Bool = false
-    @State private var isReferenceSlidersExpanded: Bool = false
     
     public init(
         state: TracingAppState,
@@ -21,15 +20,18 @@ public struct BottomToolbarView: View {
     }
     
     public var body: some View {
-        VStack(spacing: 12) {
-            if isBrushKitExpanded {
-                brushKitPanel
+        HStack {
+            Spacer(minLength: 0)
+            VStack(spacing: 12) {
+                if isBrushKitExpanded {
+                    brushKitPanel
+                }
+                mainToolbarCapsule
             }
-            if isReferenceSlidersExpanded {
-                referenceSlidersPanel
-            }
-            mainToolbarCapsule
+            .frame(maxHeight: .infinity, alignment: .center)
         }
+        .padding(.trailing, 14)
+        .padding(.vertical, 14)
     }
     
     // MARK: - Decomposed Modular Subviews
@@ -120,57 +122,12 @@ public struct BottomToolbarView: View {
         }
     }
 
-    private var referenceSlidersPanel: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Color(red: 0.961, green: 0.620, blue: 0.043))
-            
-            Text("Template Alpha")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.cyan)
-            
-            ForEach([0.2, 0.4, 0.6, 0.8], id: \.self) { value in
-                Button { state.referenceOpacity = value; state.lastActiveReferenceOpacity = value; state.isReferenceVisible = true } label: {
-                    Text("\(Int(value * 100))%")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(state.referenceOpacity == value ? .white : .cyan)
-                        .padding(.horizontal, 8).padding(.vertical, 6)
-                        .background(state.referenceOpacity == value ? .cyan : Color.cyan.opacity(0.12))
-                        .clipShape(Capsule())
-                }.buttonStyle(.plain)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(red: 0.14, green: 0.14, blue: 0.16).opacity(0.95))
-        .cornerRadius(18)
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(Color.cyan.opacity(0.25), lineWidth: 1)
-        )
-        .padding(.horizontal, 16)
-        .transition(.scale.combined(with: .opacity))
-    }
-    
     private var mainToolbarCapsule: some View {
-        HStack(spacing: 10) {
+        VStack(spacing: 10) {
             targetButton
-            alignmentButton
-            quickEyeButton
-            slidersToggleButton
-            
-            dividerView
-            
             brushToolButton
             eraserToolButton
-            
-            Spacer()
-            
             undoRedoButtons
-            
-            dividerView
-            
             exportButton
         }
         .padding(.horizontal, 12)
@@ -204,54 +161,6 @@ public struct BottomToolbarView: View {
             .clipShape(Capsule())
         }
         .help("Select Drawing from Vector Library, Photos, or Files")
-    }
-    
-    private var alignmentButton: some View {
-        Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                state.isAdjustingReference.toggle()
-            }
-        } label: {
-            Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(state.isAdjustingReference ? .black : .white)
-                .frame(width: 36, height: 36)
-                .background(state.isAdjustingReference ? Color.cyan : Color.white.opacity(0.08))
-                .clipShape(Circle())
-                .shadow(color: state.isAdjustingReference ? Color.cyan.opacity(0.4) : .clear, radius: 8)
-        }
-        .help("Pan and Scale Tracing Reference")
-    }
-    
-    private var quickEyeButton: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                state.toggleReferenceEye()
-            }
-        } label: {
-            Image(systemName: state.isReferenceVisible ? "eye.fill" : "eye.slash.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(state.isReferenceVisible ? .cyan : .gray)
-                .frame(width: 36, height: 36)
-                .background(Color.white.opacity(0.08))
-                .clipShape(Circle())
-        }
-        .help("Quick Eye Toggle (0% vs Previous Opacity)")
-    }
-    
-    private var slidersToggleButton: some View {
-        Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                isReferenceSlidersExpanded.toggle()
-            }
-        } label: {
-            Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(isReferenceSlidersExpanded ? .cyan : .gray)
-                .frame(width: 32, height: 32)
-                .background(isReferenceSlidersExpanded ? Color.cyan.opacity(0.15) : Color.clear)
-                .clipShape(Circle())
-        }
     }
     
     private var dividerView: some View {
