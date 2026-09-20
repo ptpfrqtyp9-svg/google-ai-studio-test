@@ -281,21 +281,25 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
       }
 
       if (line.tool === 'crayon') {
-        // Waxy textured crayon stroke
+        // Authentic waxy textured crayon stroke with paper tooth grain
         ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = line.color;
-        ctx.globalAlpha = 0.85;
-        ctx.lineWidth = line.lineWidth * 1.35;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        ctx.beginPath();
         if (line.points.length === 1) {
           const pt = line.points[0];
-          ctx.arc(pt.x, pt.y, (line.lineWidth * 1.35) / 2, 0, Math.PI * 2);
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, (line.lineWidth * 1.3) / 2, 0, Math.PI * 2);
           ctx.fillStyle = line.color;
+          ctx.globalAlpha = 0.85;
           ctx.fill();
         } else {
+          // Pass 1: Semi-opaque wax body base
+          ctx.save();
+          ctx.strokeStyle = line.color;
+          ctx.globalAlpha = 0.72;
+          ctx.lineWidth = line.lineWidth * 1.35;
+          ctx.beginPath();
           ctx.moveTo(line.points[0].x, line.points[0].y);
           for (let i = 1; i < line.points.length; i++) {
             const p1 = line.points[i - 1];
@@ -307,6 +311,40 @@ export const DualLayerCanvas: React.FC<DualLayerCanvasProps> = ({
           const last = line.points[line.points.length - 1];
           ctx.lineTo(last.x, last.y);
           ctx.stroke();
+          ctx.restore();
+
+          // Pass 2: Textured wax paper-tooth jitter along stroke
+          ctx.save();
+          ctx.strokeStyle = line.color;
+          ctx.globalAlpha = 0.55;
+          ctx.lineWidth = line.lineWidth * 0.9;
+          ctx.beginPath();
+          for (let i = 0; i < line.points.length; i++) {
+            const pt = line.points[i];
+            // Deterministic micro-jitter to simulate paper grain
+            const jx = ((i * 31) % 7 - 3) * 0.35;
+            const jy = ((i * 47) % 7 - 3) * 0.35;
+            if (i === 0) {
+              ctx.moveTo(pt.x + jx, pt.y + jy);
+            } else {
+              ctx.lineTo(pt.x + jx, pt.y + jy);
+            }
+          }
+          ctx.stroke();
+
+          // Pass 3: Subtle waxy texture granules
+          ctx.fillStyle = line.color;
+          ctx.globalAlpha = 0.45;
+          for (let i = 1; i < line.points.length; i += 3) {
+            const pt = line.points[i];
+            const r = ((i * 13) % 4) * 0.4 + 0.7;
+            const ox = ((i * 7) % 7 - 3) * (line.lineWidth * 0.06);
+            const oy = ((i * 11) % 7 - 3) * (line.lineWidth * 0.06);
+            ctx.beginPath();
+            ctx.arc(pt.x + ox, pt.y + oy, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
         }
         ctx.restore();
         return;

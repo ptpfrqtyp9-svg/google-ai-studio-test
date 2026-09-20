@@ -176,55 +176,9 @@ public struct StartupOptionsSheet: View {
                     // 3 Interactive Options Cards
                     VStack(spacing: 12) {
                         ForEach(options) { shape in
-                            Button {
+                            StartupOptionRow(shape: shape) {
                                 onSelectOption(shape)
-                            } label: {
-                                HStack(spacing: 16) {
-                                    // Shape Vector Icon Box
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .fill(Color.white.opacity(0.06))
-                                            .frame(width: 64, height: 64)
-                                        
-                                        VectorShapeView(shapeType: shape, strokeColor: .cyan, lineWidth: 2.5)
-                                            .frame(width: 42, height: 42)
-                                    }
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(shape.rawValue)
-                                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                                            .foregroundColor(.white)
-                                        
-                                        HStack(spacing: 6) {
-                                            Text(shape.category.rawValue.capitalized)
-                                                .font(.system(size: 11, weight: .heavy))
-                                                .foregroundColor(.cyan)
-                                                .padding(.horizontal, 7)
-                                                .padding(.vertical, 2)
-                                                .background(Color.cyan.opacity(0.15))
-                                                .clipShape(Capsule())
-                                            
-                                            Text("Tap to draw")
-                                                .font(.system(size: 12, weight: .medium))
-                                                .foregroundColor(.gray)
-                                        }
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "pencil.line")
-                                        .font(.system(size: 18, weight: .semibold))
-                                        .foregroundColor(.cyan)
-                                }
-                                .padding(14)
-                                .background(Color(red: 0.16, green: 0.16, blue: 0.18))
-                                .cornerRadius(18)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                )
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -276,6 +230,67 @@ public struct StartupOptionsSheet: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Startup Option Row Card
+public struct StartupOptionRow: View {
+    public let shape: VectorShapeType
+    public let onSelect: () -> Void
+    
+    public init(shape: VectorShapeType, onSelect: @escaping () -> Void) {
+        self.shape = shape
+        self.onSelect = onSelect
+    }
+    
+    public var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 16) {
+                // Shape Vector Icon Box
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color.white.opacity(0.06))
+                        .frame(width: 64, height: 64)
+                    
+                    VectorRendererView(shapeType: shape, strokeColor: .cyan, lineWidth: 2.5)
+                        .frame(width: 42, height: 42)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(shape.rawValue)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 6) {
+                        Text(shape.category.rawValue.capitalized)
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundColor(.cyan)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(Color.cyan.opacity(0.15))
+                            .clipShape(Capsule())
+                        
+                        Text("Tap to draw")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "pencil.line")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.cyan)
+            }
+            .padding(14)
+            .background(Color(red: 0.16, green: 0.16, blue: 0.18))
+            .cornerRadius(18)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

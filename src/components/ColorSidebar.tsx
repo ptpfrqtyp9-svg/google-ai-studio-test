@@ -69,6 +69,10 @@ export const ColorSidebar: React.FC<ColorSidebarProps> = ({
   onSelectTool,
   onClearCanvas,
   onSaveOrNext,
+  lineWidth,
+  onChangeLineWidth,
+  eraserSize,
+  onChangeEraserSize,
 }) => {
   // Determine active tab based on currentTool
   const activeTab: TabType =
@@ -131,114 +135,342 @@ export const ColorSidebar: React.FC<ColorSidebarProps> = ({
 
       {/* 2. Middle Color & Tool Caddy (Always Open) */}
       <div className="flex items-stretch rounded-3xl shadow-[0_12px_32px_rgba(0,0,0,0.18)] border-2 border-[#38bdf8] overflow-hidden bg-[#e6f4fe] max-h-[68vh] sm:max-h-[72vh]">
-        {/* Left Sub-Panel: Vertical Rack of Brushes / Crayons */}
-        <div className="w-18 sm:w-24 bg-gradient-to-r from-[#d8effe] to-[#ecf7ff] py-3 px-1.5 sm:px-2 overflow-y-auto overflow-x-hidden flex flex-col gap-1 sm:gap-1.5 scrollbar-thin scrollbar-thumb-sky-200">
-          {PALETTE_COLORS.map(({ hex, name }) => {
-            const isSelected = selectedColor.toLowerCase() === hex.toLowerCase();
+        {/* Left Sub-Panel: Dedicated Rainbow Magic Card OR Big Chunky Rack of Crayons/Brushes/Markers */}
+        {activeTab === 'rainbow' ? (
+          <div className="w-28 sm:w-36 bg-gradient-to-b from-[#fff1f2] via-[#ffe4e6] to-[#fecdd3] p-3 sm:p-4 flex flex-col items-center justify-center text-center gap-3 select-none">
+            {/* Animated Magic Rainbow Badge */}
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-rose-500 via-amber-400 via-emerald-400 to-sky-500 p-0.5 shadow-lg shadow-rose-500/25 animate-pulse">
+              <div className="w-full h-full rounded-[14px] bg-white flex flex-col items-center justify-center overflow-hidden">
+                <span className="text-2xl sm:text-3xl">🌈</span>
+              </div>
+              <span className="absolute -top-1 -right-1 text-sm animate-bounce">✨</span>
+            </div>
 
-            return (
-              <button
-                key={hex}
-                type="button"
-                onClick={() => handleColorClick(hex)}
-                title={name}
-                className={`group relative flex items-center transition-all duration-150 cursor-pointer h-7 sm:h-8 w-full ${
-                  isSelected
-                    ? '-translate-x-2 sm:-translate-x-3 scale-105 z-10'
-                    : 'hover:-translate-x-1 opacity-95 hover:opacity-100'
-                }`}
-              >
-                {/* Visual Paintbrush / Crayon SVG illustration */}
-                <svg
-                  viewBox="0 0 100 28"
-                  className="w-full h-full filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] overflow-visible"
+            <div className="space-y-1">
+              <div className="text-xs sm:text-sm font-black text-rose-600 tracking-wide uppercase">
+                Rainbow Magic
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-gray-600 font-semibold leading-tight">
+                No color selection needed — your strokes cycle through all rainbow colors automatically!
+              </p>
+            </div>
+
+            {/* Rainbow Stroke Width Quick Buttons */}
+            {onChangeLineWidth && (
+              <div className="w-full pt-1 flex flex-col items-center gap-1.5">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  Brush Thickness
+                </span>
+                <div className="flex items-center justify-center gap-1.5 w-full">
+                  {[
+                    { label: 'S', width: 4, title: 'Thin Rainbow' },
+                    { label: 'M', width: 8, title: 'Medium Rainbow' },
+                    { label: 'L', width: 14, title: 'Thick Rainbow' },
+                  ].map((sz) => (
+                    <button
+                      key={sz.label}
+                      type="button"
+                      onClick={() => onChangeLineWidth(sz.width)}
+                      title={sz.title}
+                      className={`flex-1 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        lineWidth === sz.width
+                          ? 'bg-rose-500 text-white shadow-md scale-105'
+                          : 'bg-white/80 text-gray-700 hover:bg-white border border-rose-200'
+                      }`}
+                    >
+                      {sz.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-32 sm:w-44 bg-gradient-to-r from-[#d8effe] to-[#ecf7ff] py-3 px-1.5 sm:px-2.5 overflow-y-auto overflow-x-hidden flex flex-col gap-1.5 sm:gap-2 scrollbar-thin scrollbar-thumb-sky-200">
+            {PALETTE_COLORS.map(({ hex, name }) => {
+              const isSelected = selectedColor.toLowerCase() === hex.toLowerCase();
+
+              return (
+                <button
+                  key={hex}
+                  type="button"
+                  onClick={() => handleColorClick(hex)}
+                  title={`${name} (${activeTab.toUpperCase()})`}
+                  className={`group relative flex items-center transition-all duration-150 cursor-pointer h-10 sm:h-12 w-full ${
+                    isSelected
+                      ? '-translate-x-2 sm:-translate-x-3 scale-105 z-10'
+                      : 'hover:-translate-x-1 opacity-95 hover:opacity-100'
+                  }`}
                 >
-                  <defs>
-                    {/* Metal Ferrule Chrome Gradient */}
-                    <linearGradient id={`ferrule-${hex}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f1f5f9" />
-                      <stop offset="35%" stopColor="#cbd5e1" />
-                      <stop offset="60%" stopColor="#ffffff" />
-                      <stop offset="100%" stopColor="#94a3b8" />
-                    </linearGradient>
+                  {/* Distinct SVG illustration based on active tab: Crayon vs Paintbrush vs Glitter Marker */}
+                  {activeTab === 'crayon' ? (
+                    /* REALISTIC CRAYON: Pointed wax cone, exposed wax neck, paper wrapper with wavy bands & label */
+                    <svg
+                      viewBox="0 0 130 36"
+                      className="w-full h-full filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] overflow-visible"
+                    >
+                      <defs>
+                        <linearGradient id={`crayon-wax-${hex}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+                          <stop offset="35%" stopColor={hex} />
+                          <stop offset="85%" stopColor={hex} />
+                          <stop offset="100%" stopColor="#000000" stopOpacity="0.35" />
+                        </linearGradient>
+                        <linearGradient id={`paper-${hex}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#ffffff" />
+                          <stop offset="60%" stopColor="#f8fafc" />
+                          <stop offset="100%" stopColor="#e2e8f0" />
+                        </linearGradient>
+                      </defs>
 
-                    {/* Wooden Brush Handle Gradient */}
-                    <linearGradient id={`wood-${hex}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#a76535" />
-                      <stop offset="45%" stopColor="#c57e45" />
-                      <stop offset="70%" stopColor="#8d5027" />
-                      <stop offset="100%" stopColor="#633719" />
-                    </linearGradient>
+                      {/* 1. Pointed Conical Wax Tip */}
+                      <path
+                        d="M 6 18 L 32 6 L 32 30 Z"
+                        fill={`url(#crayon-wax-${hex})`}
+                      />
+                      {/* Wax tip chisel reflection */}
+                      <path
+                        d="M 6 18 L 32 6 L 32 18 Z"
+                        fill="white"
+                        opacity="0.3"
+                      />
 
-                    {/* Paint Sheen Gradient */}
-                    <linearGradient id={`paintSheen-${hex}`} x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="white" stopOpacity="0.5" />
-                      <stop offset="50%" stopColor="white" stopOpacity="0.1" />
-                      <stop offset="100%" stopColor="black" stopOpacity="0.15" />
-                    </linearGradient>
-                  </defs>
+                      {/* 2. Exposed Wax Neck */}
+                      <rect x="32" y="6" width="6" height="24" fill={hex} />
 
-                  {/* 1. Wooden Handle */}
-                  <path
-                    d="M 58 7 L 100 7 L 100 21 L 58 21 Z"
-                    fill={`url(#wood-${hex})`}
-                    rx="1.5"
-                  />
-                  {/* Subtle wood seam */}
-                  <line x1="58" y1="14" x2="100" y2="14" stroke="#522a12" strokeWidth="0.5" opacity="0.3" />
+                      {/* 3. Paper Wrapper Barrel */}
+                      <rect
+                        x="38"
+                        y="5"
+                        width="88"
+                        height="26"
+                        rx="4"
+                        fill={`url(#paper-${hex})`}
+                        stroke="#cbd5e1"
+                        strokeWidth="0.8"
+                      />
 
-                  {/* 2. Metallic Chrome Ferrule */}
-                  <path
-                    d="M 40 5.5 L 58 7 L 58 21 L 40 22.5 Z"
-                    fill={`url(#ferrule-${hex})`}
-                    stroke="#94a3b8"
-                    strokeWidth="0.5"
-                  />
-                  {/* Ferrule crimp rings */}
-                  <line x1="47" y1="6" x2="47" y2="22" stroke="#64748b" strokeWidth="0.7" opacity="0.6" />
-                  <line x1="53" y1="6.5" x2="53" y2="21.5" stroke="#ffffff" strokeWidth="0.7" opacity="0.8" />
+                      {/* Main color stripe on wrapper */}
+                      <rect x="44" y="9" width="76" height="18" rx="2" fill={hex} opacity="0.9" />
 
-                  {/* 3. Dipped Bristles Tip */}
-                  <path
-                    d="M 40 5.5 C 32 5.5, 18 9, 3 14 C 18 19, 32 22.5, 40 22.5 Z"
-                    fill={hex}
-                  />
+                      {/* Classic iconic Crayola wavy / zigzag black borders */}
+                      <path
+                        d="M 46 11 Q 49 8 52 11 T 58 11 T 64 11 T 70 11 T 76 11 T 82 11 T 88 11 T 94 11 T 100 11 T 106 11 T 112 11 T 118 11"
+                        fill="none"
+                        stroke="#1e293b"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M 46 25 Q 49 22 52 25 T 58 25 T 64 25 T 70 25 T 76 25 T 82 25 T 88 25 T 94 25 T 100 25 T 106 25 T 112 25 T 118 25"
+                        fill="none"
+                        stroke="#1e293b"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                      />
 
-                  {/* Paint gloss highlight overlay */}
-                  <path
-                    d="M 38 8 C 30 8, 18 11.5, 7 14 C 18 13, 30 11, 38 11 Z"
-                    fill="white"
-                    opacity="0.45"
-                  />
+                      {/* Wrapper Label text: e.g. color name */}
+                      <text
+                        x="82"
+                        y="19.5"
+                        textAnchor="middle"
+                        fontSize="7"
+                        fontWeight="900"
+                        letterSpacing="0.8"
+                        fill={
+                          hex === '#ffffff' || hex === '#facc15' || hex === '#f9a8d4'
+                            ? '#1e293b'
+                            : '#ffffff'
+                        }
+                        fontFamily="sans-serif"
+                      >
+                        {name.toUpperCase()}
+                      </text>
 
-                  {/* Rainbow Sparkle overlay if in rainbow/glitter mode */}
-                  {activeTab === 'glitter' && (
-                    <circle cx="20" cy="14" r="2.5" fill="#fef08a" opacity="0.9" />
+                      {/* Active selection outline */}
+                      {isSelected && (
+                        <rect
+                          x="3"
+                          y="3"
+                          width="125"
+                          height="30"
+                          rx="6"
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="2.5"
+                          filter="drop-shadow(0 0 3px rgba(255,255,255,0.8))"
+                        />
+                      )}
+                    </svg>
+                  ) : activeTab === 'brush' ? (
+                    /* REALISTIC PAINTBRUSH: Elegant long wooden handle, chrome ferrule with crimp rings, wet teardrop bristle tip with paint drip */
+                    <svg
+                      viewBox="0 0 130 36"
+                      className="w-full h-full filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] overflow-visible"
+                    >
+                      <defs>
+                        <linearGradient id={`ferrule-brush-${hex}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#f8fafc" />
+                          <stop offset="30%" stopColor="#cbd5e1" />
+                          <stop offset="60%" stopColor="#ffffff" />
+                          <stop offset="100%" stopColor="#64748b" />
+                        </linearGradient>
+                        <linearGradient id={`wood-brush-${hex}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#b45309" />
+                          <stop offset="40%" stopColor="#d97706" />
+                          <stop offset="70%" stopColor="#92400e" />
+                          <stop offset="100%" stopColor="#451a03" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* 1. Long Elegant Tapered Wooden Artist Handle */}
+                      <path
+                        d="M 64 10 L 126 13 C 129 14.5 129 21.5 126 23 L 64 26 Z"
+                        fill={`url(#wood-brush-${hex})`}
+                      />
+                      {/* Handle glossy varnish stripe */}
+                      <path
+                        d="M 66 12 L 122 15 C 124 16 124 17 122 18 L 66 15 Z"
+                        fill="white"
+                        opacity="0.35"
+                      />
+
+                      {/* 2. Chrome Metallic Ferrule with Crimp Rings */}
+                      <rect
+                        x="42"
+                        y="8"
+                        width="22"
+                        height="20"
+                        rx="1.5"
+                        fill={`url(#ferrule-brush-${hex})`}
+                        stroke="#64748b"
+                        strokeWidth="0.6"
+                      />
+                      <line x1="49" y1="8" x2="49" y2="28" stroke="#475569" strokeWidth="1" opacity="0.6" />
+                      <line x1="56" y1="8" x2="56" y2="28" stroke="#ffffff" strokeWidth="0.8" opacity="0.8" />
+
+                      {/* 3. Soft Teardrop Artist Bristle Tip dipped in paint */}
+                      <path
+                        d="M 42 9 C 32 9, 18 13.5, 4 18 C 18 22.5, 32 27, 42 27 Z"
+                        fill={hex}
+                      />
+                      {/* Glossy wet paint reflection curve */}
+                      <path
+                        d="M 40 11 C 30 11, 19 14.5, 9 18 C 19 16.5, 30 14, 40 14 Z"
+                        fill="white"
+                        opacity="0.65"
+                      />
+                      {/* Paint drip bead */}
+                      <circle cx="4" cy="18" r="2.2" fill={hex} />
+                      <circle cx="3.2" cy="17.2" r="0.8" fill="white" opacity="0.8" />
+
+                      {/* Active selection outline */}
+                      {isSelected && (
+                        <rect
+                          x="2"
+                          y="4"
+                          width="126"
+                          height="28"
+                          rx="6"
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="2.5"
+                          filter="drop-shadow(0 0 3px rgba(255,255,255,0.8))"
+                        />
+                      )}
+                    </svg>
+                  ) : (
+                    /* GLITTER MARKER: Translucent barrel, floating stars, felt bullet tip */
+                    <svg
+                      viewBox="0 0 130 36"
+                      className="w-full h-full filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] overflow-visible"
+                    >
+                      <defs>
+                        <linearGradient id={`glitter-barrel-${hex}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+                          <stop offset="40%" stopColor={hex} stopOpacity="0.85" />
+                          <stop offset="100%" stopColor={hex} stopOpacity="0.95" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* 1. Sparkle Felt Tip */}
+                      <polygon points="6,18 28,9 28,27" fill={hex} />
+                      <polygon points="6,18 28,9 28,18" fill="white" opacity="0.3" />
+
+                      {/* 2. Plastic Collar */}
+                      <rect
+                        x="28"
+                        y="9"
+                        width="10"
+                        height="18"
+                        rx="1"
+                        fill="#e2e8f0"
+                        stroke="#94a3b8"
+                        strokeWidth="0.5"
+                      />
+
+                      {/* 3. Translucent Glitter Barrel */}
+                      <rect
+                        x="38"
+                        y="7"
+                        width="88"
+                        height="22"
+                        rx="4"
+                        fill={`url(#glitter-barrel-${hex})`}
+                        stroke="#ffffff"
+                        strokeWidth="0.8"
+                      />
+
+                      {/* Floating Sparkle Stars inside barrel */}
+                      <circle cx="52" cy="14" r="1.8" fill="#ffffff" />
+                      <circle cx="68" cy="22" r="1.4" fill="#fef08a" />
+                      <circle cx="84" cy="13" r="2" fill="#ffffff" />
+                      <circle cx="102" cy="21" r="1.5" fill="#fef08a" />
+                      <circle cx="116" cy="15" r="1.8" fill="#ffffff" />
+
+                      <text
+                        x="76"
+                        y="19.5"
+                        textAnchor="middle"
+                        fontSize="7.5"
+                        fontWeight="900"
+                        letterSpacing="1"
+                        fill="#ffffff"
+                        fontFamily="sans-serif"
+                        opacity="0.9"
+                      >
+                        ✨ GLITTER ✨
+                      </text>
+
+                      {/* Active selection outline */}
+                      {isSelected && (
+                        <rect
+                          x="3"
+                          y="4"
+                          width="125"
+                          height="28"
+                          rx="6"
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="2.5"
+                          filter="drop-shadow(0 0 3px rgba(255,255,255,0.8))"
+                        />
+                      )}
+                    </svg>
                   )}
 
-                  {/* Active Pop-out Halo Outline when Selected */}
+                  {/* Selected Active Indicator Badge */}
                   {isSelected && (
-                    <path
-                      d="M 40 4 C 30 4, 15 8, 1 14 C 15 20, 30 24, 40 24"
-                      fill="none"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                      opacity="0.9"
+                    <div
+                      className="absolute -left-1 sm:-left-1.5 w-2.5 h-2.5 rounded-full border-2 border-white shadow-sm animate-pulse"
+                      style={{ backgroundColor: hex }}
                     />
                   )}
-                </svg>
-
-                {/* Selected Active Indicator Badge */}
-                {isSelected && (
-                  <div
-                    className="absolute -left-1 sm:-left-1.5 w-2 h-2 rounded-full border border-white shadow-sm animate-pulse"
-                    style={{ backgroundColor: hex }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Right Sub-Panel: Vibrant Sky-Blue Bar with 4 Tool Tabs */}
         <div className="w-13 sm:w-16 bg-gradient-to-b from-[#029df4] via-[#028ce0] to-[#017bc7] p-1 sm:p-1.5 flex flex-col justify-around gap-1.5 sm:gap-2 border-l border-[#38bdf8]">

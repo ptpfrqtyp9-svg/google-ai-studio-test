@@ -1026,6 +1026,8 @@ public struct AirplaneShape: Shape {
 }
 
 // MARK: - Generic Vector Renderer
+public typealias VectorShapeView = VectorRendererView
+
 public struct VectorRendererView: View {
     public let shapeType: VectorShapeType
     public var strokeColor: Color = Color.cyan

@@ -268,6 +268,23 @@ export const ColorByNumberView: React.FC<ColorByNumberViewProps> = ({
   const completionPercent =
     totalColorableCells > 0 ? Math.round((totalFilledCells / totalColorableCells) * 100) : 0;
 
+  // Remaining unfinished color options (removes finished colors from options)
+  const availablePalette = currentTemplate.palette.filter((p) => {
+    const count = numberCounts[p.number];
+    if (!count || count.total === 0) return false;
+    return count.filled < count.total;
+  });
+
+  // When activeNumber gets completed or is not in availablePalette, auto-advance to next unfinished color
+  useEffect(() => {
+    if (availablePalette.length > 0) {
+      const isCurrentActiveAvailable = availablePalette.some((p) => p.number === activeNumber);
+      if (!isCurrentActiveAvailable) {
+        setActiveNumber(availablePalette[0].number);
+      }
+    }
+  }, [availablePalette, activeNumber]);
+
   // Check for completion
   useEffect(() => {
     if (totalColorableCells > 0 && totalFilledCells === totalColorableCells && !isCompleted) {
@@ -294,15 +311,10 @@ export const ColorByNumberView: React.FC<ColorByNumberViewProps> = ({
         });
         setHintMessage(null);
       } else {
-        // Mismatch: provide gentle kid-friendly guidance
+        // Mismatch: playful bounce without annoying warning message
         sfx.playWrong();
         setWobbleCell({ r, c });
         setTimeout(() => setWobbleCell(null), 500);
-
-        const correctColor = currentTemplate.palette.find((p) => p.number === targetNum);
-        setHintMessage(
-          `Oops! That's number ${targetNum}! Choose color #${targetNum} (${correctColor?.name || ''}) below 🎨`
-        );
       }
     },
     [currentTemplate, activeNumber, filledCells]
@@ -434,50 +446,50 @@ export const ColorByNumberView: React.FC<ColorByNumberViewProps> = ({
             </div>
           </div>
 
-          {/* Floating Numbered Color Swatch Capsule inspired by IMG_3933.jpg */}
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-white/95 rounded-full shadow-2xl border border-gray-200">
-            {currentTemplate.palette.map((p) => {
-              const isSelected = activeNumber === p.number;
-              const count = numberCounts[p.number];
-              const isNumberFinished = count && count.total > 0 && count.filled === count.total;
+          {/* Floating Numbered Color Swatch Capsule - only showing unfinished colors */}
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-white/95 rounded-full shadow-2xl border border-gray-200 min-h-[58px]">
+            {availablePalette.length > 0 ? (
+              availablePalette.map((p) => {
+                const isSelected = activeNumber === p.number;
+                const count = numberCounts[p.number];
+                const remaining = count ? count.total - count.filled : 0;
 
-              return (
-                <button
-                  key={p.number}
-                  onClick={() => {
-                    setActiveNumber(p.number);
-                    setHintMessage(null);
-                  }}
-                  className={`relative flex items-center justify-center rounded-full transition-all ${
-                    isSelected
-                      ? 'ring-4 ring-emerald-500 ring-offset-2 scale-110 shadow-lg'
-                      : 'hover:scale-105 opacity-90'
-                  }`}
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    backgroundColor: p.color,
-                  }}
-                  title={`${p.name} (Number ${p.number})`}
-                >
-                  {/* Number inside color ball */}
-                  <span
-                    className={`font-black text-base drop-shadow ${
-                      p.color === '#ffffff' ? 'text-black' : 'text-white'
+                return (
+                  <button
+                    key={p.number}
+                    onClick={() => {
+                      setActiveNumber(p.number);
+                      setHintMessage(null);
+                    }}
+                    className={`relative flex items-center justify-center rounded-full transition-all cursor-pointer ${
+                      isSelected
+                        ? 'ring-4 ring-emerald-500 ring-offset-2 scale-110 shadow-lg'
+                        : 'hover:scale-105 opacity-90'
                     }`}
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      backgroundColor: p.color,
+                    }}
+                    title={`${p.name} (Number ${p.number} - ${remaining} left)`}
                   >
-                    {isNumberFinished ? <Check className="w-5 h-5 stroke-[3]" /> : p.number}
-                  </span>
-
-                  {/* Complete check badge */}
-                  {isNumberFinished && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border border-white text-[10px] text-white flex items-center justify-center font-bold shadow">
-                      ✓
+                    {/* Number inside color ball */}
+                    <span
+                      className={`font-black text-base drop-shadow ${
+                        p.color === '#ffffff' ? 'text-black' : 'text-white'
+                      }`}
+                    >
+                      {p.number}
                     </span>
-                  )}
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1 text-emerald-600 font-bold text-sm">
+                <Check className="w-5 h-5 stroke-[3]" />
+                <span>All colors finished! 🌟</span>
+              </div>
+            )}
           </div>
 
           {/* Action Tools (Grid Toggle & Hint Lightbulb) inspired by IMG_3933.jpg */}

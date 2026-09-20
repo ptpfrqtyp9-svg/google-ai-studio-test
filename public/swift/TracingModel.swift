@@ -246,7 +246,7 @@ public class TracingAppState: ObservableObject {
     @Published public var brushOpacity: Double = 1.0
     
     // Reference Layer State
-    @Published public var referenceTarget: ReferenceTarget
+    @Published public var referenceTarget: ReferenceTarget = .vector(.star)
     @Published public var isReferenceVisible: Bool = true
     @Published public var referenceOpacity: Double = 0.45
     @Published public var lastActiveReferenceOpacity: Double = 0.45
@@ -288,8 +288,6 @@ public class TracingAppState: ObservableObject {
         Color.white,
         Color.black
     ]
-    
-    public init() {}
     
     // MARK: - Drawing Actions
     
