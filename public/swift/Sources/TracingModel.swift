@@ -246,6 +246,7 @@ public class TracingAppState: ObservableObject {
     @Published public var currentTool: DrawingTool = .brush
     @Published public var selectedColor: Color = Color(red: 0.925, green: 0.282, blue: 0.600)
     @Published public var lineWidth: CGFloat = 7.0
+    @Published public var eraserSize: CGFloat = 18.0
     @Published public var brushOpacity: Double = 1.0
     
     // Reference Layer State
@@ -279,6 +280,23 @@ public class TracingAppState: ObservableObject {
     
     // Preset Vibrant Color Palette
     public let vibrantColors: [Color] = [
+        Color(red: 1.00, green: 0.36, blue: 0.46), // Strawberry
+        Color(red: 1.00, green: 0.65, blue: 0.18), // Orange
+        Color(red: 1.00, green: 0.84, blue: 0.20), // Sunshine
+        Color(red: 0.29, green: 0.78, blue: 0.42), // Apple
+        Color(red: 0.19, green: 0.72, blue: 0.94), // Sky
+        Color(red: 0.45, green: 0.39, blue: 0.95), // Grape
+        Color(red: 0.96, green: 0.42, blue: 0.73), // Bubblegum
+        Color(red: 0.22, green: 0.84, blue: 0.72), // Mint
+        Color(red: 0.95, green: 0.49, blue: 0.25), // Peach
+        Color.white,
+        Color.black
+    ]
+    /*
+        Legacy palette entries intentionally replaced with larger, kid-friendly swatches.
+        The picker is button-based so children can choose directly without a slider.
+    */
+    public let legacyVibrantColors: [Color] = [
         Color(red: 0.925, green: 0.282, blue: 0.600), // React default magenta
         Color(red: 0.145, green: 0.388, blue: 0.922), // React blue
         Color(red: 0.69, green: 0.32, blue: 0.87), // Purple
@@ -299,8 +317,8 @@ public class TracingAppState: ObservableObject {
         let newLine = DrawingLine(
             points: [point],
             color: selectedColor,
-            lineWidth: lineWidth,
-            opacity: brushOpacity,
+            lineWidth: currentTool == .eraser ? eraserSize : lineWidth,
+            opacity: currentTool == .eraser ? 1.0 : brushOpacity,
             isEraser: currentTool == .eraser,
             tool: currentTool
         )

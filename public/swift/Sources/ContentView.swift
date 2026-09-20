@@ -189,7 +189,7 @@ private struct ColorByNumberView: View {
     @ObservedObject var state: TracingAppState
     let openLibrary: () -> Void
     @State private var selectedNumber = 1
-    @State private var filledCells: Set<Int> = []
+    @State private var filledCells: [Int: Int] = [:]
     private let grid: [[Int?]] = [
         [nil, nil, nil, 1, 1, 1, nil, nil, 1, 1, nil],
         [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
@@ -269,10 +269,26 @@ private struct ColorByNumberView: View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 11), spacing: 4) {
             ForEach(Array(grid.joined()).indices, id: \.self) { index in
                 let value = Array(grid.joined())[index]
-                Button { if value == selectedNumber { filledCells.insert(index) } } label: {
-                    Group { if let value { Text(filledCells.contains(index) ? "" : "\(value)").font(.system(size: 18, weight: .bold, design: .rounded)).foregroundColor(studioInk) } else { Color.clear } }
-                        .frame(minWidth: 44, minHeight: 44).background(filledCells.contains(index) ? colors[selectedNumber - 1] : Color(red: 0.97, green: 0.98, blue: 0.99)).clipShape(RoundedRectangle(cornerRadius: 5)).overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.gray.opacity(0.18), lineWidth: 1))
-                }.buttonStyle(.plain)
+                Button {
+                    if let value, value == selectedNumber {
+                        filledCells[index] = value
+                    }
+                } label: {
+                    Group {
+                        if let value {
+                            Text(filledCells[index] == value ? "" : "\(value)")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(studioInk)
+                        } else {
+                            Color.clear
+                        }
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .background(filledCells[index].map { colors[$0 - 1] } ?? Color(red: 0.97, green: 0.98, blue: 0.99))
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.gray.opacity(0.18), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
             }
         }.padding(18).background(Color(red: 0.72, green: 0.51, blue: 0.31)).clipShape(RoundedRectangle(cornerRadius: 26)).overlay(RoundedRectangle(cornerRadius: 26).stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 7)).frame(maxWidth: 650)
     }

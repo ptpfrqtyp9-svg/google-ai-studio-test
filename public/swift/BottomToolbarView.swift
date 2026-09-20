@@ -36,9 +36,16 @@ public struct BottomToolbarView: View {
     
     private var brushKitPanel: some View {
         VStack(spacing: 16) {
-            thicknessSliderRow
-            opacitySliderRow
-            colorSwatchesRow
+            Text(state.currentTool == .eraser ? "Eraser Size" : "Brush & Color")
+                .font(.system(size: 15, weight: .black, design: .rounded))
+                .foregroundColor(Color(red: 0.12, green: 0.14, blue: 0.20))
+            if state.currentTool == .eraser {
+                eraserSizeChoices
+            } else {
+                brushSizeChoices
+                opacityChoices
+                colorSwatchesRow
+            }
         }
         .padding(16)
         .background(Color.white.opacity(0.96))
@@ -49,50 +56,6 @@ public struct BottomToolbarView: View {
         )
         .padding(.horizontal, 16)
         .transition(.scale.combined(with: .opacity))
-    }
-    
-    private var thicknessSliderRow: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "pencil.tip")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Color(red: 0.35, green: 0.35, blue: 0.38))
-                .frame(width: 20)
-            
-            Text("Thickness")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Color(red: 0.11, green: 0.11, blue: 0.13))
-                .frame(width: 75, alignment: .leading)
-            
-            Slider(value: $state.lineWidth, in: 1...40, step: 1)
-                .tint(Color(red: 0.961, green: 0.620, blue: 0.043))
-            
-            Text("\(Int(state.lineWidth)) pt")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
-                .frame(width: 44, alignment: .trailing)
-        }
-    }
-    
-    private var opacitySliderRow: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "drop.fill")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.gray)
-                .frame(width: 20)
-            
-            Text("Opacity")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(width: 75, alignment: .leading)
-            
-            Slider(value: $state.brushOpacity, in: 0.1...1.0, step: 0.05)
-                .tint(.blue)
-            
-            Text("\(Int(state.brushOpacity * 100))%")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
-                .frame(width: 44, alignment: .trailing)
-        }
     }
     
     private var colorSwatchesRow: some View {
@@ -120,6 +83,43 @@ public struct BottomToolbarView: View {
         }
     }
     
+    private var brushSizeChoices: some View {
+        sizeChoiceRow(title: "Brush size", values: [4, 8, 14, 22, 32], selected: state.lineWidth) { state.lineWidth = $0 }
+    }
+
+    private var eraserSizeChoices: some View {
+        sizeChoiceRow(title: "Eraser size", values: [10, 18, 28, 40, 56], selected: state.eraserSize) { state.eraserSize = $0 }
+    }
+
+    private var opacityChoices: some View {
+        HStack(spacing: 8) {
+            Text("Opacity").font(.system(size: 12, weight: .bold)).foregroundColor(.secondary)
+            ForEach([0.35, 0.55, 0.75, 1.0], id: \.self) { value in
+                Button { state.brushOpacity = value } label: {
+                    Text("\(Int(value * 100))%").font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(state.brushOpacity == value ? .white : .primary)
+                        .padding(.horizontal, 9).padding(.vertical, 7)
+                        .background(state.brushOpacity == value ? Color.blue : Color.black.opacity(0.06))
+                        .clipShape(Capsule())
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func sizeChoiceRow(title: String, values: [CGFloat], selected: CGFloat, onSelect: @escaping (CGFloat) -> Void) -> some View {
+        HStack(spacing: 10) {
+            Text(title).font(.system(size: 12, weight: .bold)).foregroundColor(.secondary)
+            ForEach(values, id: \.self) { value in
+                Button { onSelect(value) } label: {
+                    Circle().fill(selected == value ? Color.orange : Color.black.opacity(0.08))
+                        .frame(width: 42, height: 42)
+                        .overlay(Circle().stroke(selected == value ? Color.orange.opacity(0.35) : .clear, lineWidth: 4))
+                        .overlay(Circle().fill(selected == value ? .white : .primary).frame(width: min(max(value / 2, 4), 18), height: min(max(value / 2, 4), 18)))
+                }.buttonStyle(.plain).accessibilityLabel("\(Int(value)) point \(title)")
+            }
+        }
+    }
+
     private var referenceSlidersPanel: some View {
         HStack(spacing: 12) {
             Image(systemName: "slider.horizontal.3")
@@ -130,19 +130,16 @@ public struct BottomToolbarView: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(.cyan)
             
-            Slider(value: $state.referenceOpacity, in: 0.0...1.0, step: 0.05)
-                .tint(.cyan)
-                .onChange(of: state.referenceOpacity) { _, val in
-                    state.isReferenceVisible = val > 0.01
-                    if val > 0.05 {
-                        state.lastActiveReferenceOpacity = val
-                    }
-                }
-            
-            Text("\(Int(state.referenceOpacity * 100))%")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundColor(.cyan)
-                .frame(width: 44, alignment: .trailing)
+            ForEach([0.2, 0.4, 0.6, 0.8], id: \.self) { value in
+                Button { state.referenceOpacity = value; state.lastActiveReferenceOpacity = value; state.isReferenceVisible = true } label: {
+                    Text("\(Int(value * 100))%")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(state.referenceOpacity == value ? .white : .cyan)
+                        .padding(.horizontal, 8).padding(.vertical, 6)
+                        .background(state.referenceOpacity == value ? .cyan : Color.cyan.opacity(0.12))
+                        .clipShape(Capsule())
+                }.buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -290,7 +287,9 @@ public struct BottomToolbarView: View {
     private var eraserToolButton: some View {
         Button {
             state.currentTool = .eraser
-            isBrushKitExpanded = false
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isBrushKitExpanded = true
+            }
         } label: {
             Image(systemName: "eraser.fill")
                 .font(.system(size: 14, weight: .bold))
