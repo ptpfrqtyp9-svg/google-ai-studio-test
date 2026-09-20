@@ -62,6 +62,12 @@ public struct DualLayerCanvasView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 }
             }
+            .onAppear {
+                state.canvasSize = geometry.size
+            }
+            .onChange(of: geometry.size) { _, newSize in
+                state.canvasSize = newSize
+            }
         }
     }
 }
