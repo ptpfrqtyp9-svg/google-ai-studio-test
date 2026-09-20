@@ -188,98 +188,70 @@ public struct ContentView: View {
 private struct ColorByNumberView: View {
     @ObservedObject var state: TracingAppState
     let openLibrary: () -> Void
-    @State private var selectedNumber = 1
-    @State private var filledNumbers: Set<Int> = []
-
-    private let palette: [Color] = [.red, .orange, .yellow, .green, .blue, .purple]
+    @State private var showNext = false
 
     var body: some View {
-        ZStack {
-            studioPaper
-            VStack(spacing: 16) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Color by Number")
-                            .font(.system(size: 25, weight: .black, design: .rounded))
-                            .foregroundColor(studioInk)
-                        Text("Tap a number, choose its color, then fill the matching region.")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(studioInk.opacity(0.62))
+        GeometryReader { geometry in
+            ZStack {
+                Image("coloring-game-reference")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button {
+                            openLibrary()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 30, weight: .heavy))
+                                .foregroundColor(Color(red: 1, green: 0.96, blue: 0.72))
+                                .frame(width: 88, height: 88)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 28)
+                                        .fill(Color(red: 0.98, green: 0.38, blue: 0.28))
+                                        .shadow(color: .black.opacity(0.2), radius: 5, y: 4)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 28)
+                                        .stroke(Color(red: 0.78, green: 0.22, blue: 0.16), lineWidth: 5)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 18)
+                        .padding(.trailing, 22)
                     }
                     Spacer()
-                    Button(action: openLibrary) {
-                        Label("Library", systemImage: "square.grid.2x2.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 9)
-                            .background(studioAmber)
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 58)
-
-                ZStack {
-                    RoundedRectangle(cornerRadius: 28)
-                        .fill(Color.white.opacity(0.72))
-                        .overlay(RoundedRectangle(cornerRadius: 28).stroke(studioAmber.opacity(0.45), lineWidth: 1.5))
-                    VStack(spacing: 14) {
-                        if case let .vector(shape) = state.referenceTarget {
-                            VectorRendererView(shapeType: shape, strokeColor: studioInk.opacity(0.82), lineWidth: 3)
-                                .frame(width: 250, height: 250)
-                        } else {
-                            Image(systemName: "photo")
-                                .font(.system(size: 54))
-                                .foregroundColor(studioInk.opacity(0.35))
-                        }
-                        Text("Tap a numbered region to fill it")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(studioInk.opacity(0.55))
-                    }
-                    .padding(24)
-                }
-                .frame(maxWidth: 420)
-                .padding(.horizontal, 20)
-
-                HStack(spacing: 10) {
-                    ForEach(1...6, id: \.self) { number in
+                    HStack {
                         Button {
-                            if selectedNumber == number {
-                                filledNumbers.insert(number)
-                            } else {
-                                selectedNumber = number
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                showNext.toggle()
                             }
                         } label: {
-                            Text("\(number)")
-                                .font(.system(size: 16, weight: .black, design: .rounded))
-                                .foregroundColor(filledNumbers.contains(number) ? .white : studioInk)
-                                .frame(width: 42, height: 42)
-                                .background(filledNumbers.contains(number) ? palette[number - 1] : Color.white.opacity(0.8))
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(selectedNumber == number ? studioAmber : .clear, lineWidth: 3))
+                            Image(systemName: showNext ? "checkmark" : "arrow.right")
+                                .font(.system(size: 30, weight: .heavy))
+                                .foregroundColor(Color(red: 1, green: 0.96, blue: 0.72))
+                                .frame(width: 88, height: 88)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 28)
+                                        .fill(Color(red: 0.95, green: 0.19, blue: 0.14))
+                                        .shadow(color: .black.opacity(0.22), radius: 5, y: 4)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 28)
+                                        .stroke(Color(red: 0.70, green: 0.12, blue: 0.09), lineWidth: 5)
+                                )
                         }
                         .buttonStyle(.plain)
+                        .padding(.leading, 22)
+                        .padding(.bottom, 18)
+                        Spacer()
                     }
                 }
-
-                HStack(spacing: 12) {
-                    ForEach(Array(palette.enumerated()), id: \.offset) { index, color in
-                        Button { selectedNumber = index + 1 } label: {
-                            Circle().fill(color).frame(width: 28, height: 28)
-                                .overlay(Circle().stroke(.white, lineWidth: 2))
-                                .shadow(color: color.opacity(0.35), radius: 4)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-
-                Text("\(filledNumbers.count) of 6 regions complete")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundColor(studioInk.opacity(0.62))
-                Spacer()
             }
+            .ignoresSafeArea()
         }
     }
 }
