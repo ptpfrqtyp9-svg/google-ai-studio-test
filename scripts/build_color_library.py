@@ -148,9 +148,11 @@ def center_and_mirror(cells):
         if best is None or key < best[0]:
             best = (key, moved)
     cells = best[1]
-    for (x, y), c in list(cells.items()):
-        cells.setdefault((13 - x, y), c)
-    return cells
+    mirrored = {}
+    for (x, y), c in sorted(cells.items(), key=lambda item: item[0][0] > 6):
+        left_x = x if x <= 6 else 13 - x
+        mirrored.setdefault((left_x, y), c)
+    return {**mirrored, **{(13 - x, y): c for (x, y), c in mirrored.items()}}
 
 
 def vertical_center(cells):
@@ -226,7 +228,7 @@ def build():
         assert 1 <= len(counts) <= MAX_COLORS, (name, counts)
         order = sorted(counts, key=lambda k: (-counts[k], k))
         digit = {color: str(i + 1) for i, color in enumerate(order)}
-        rows = ["".join(digit.get((x, y), ".") for x in range(1, N + 1)) for y in range(1, N + 1)]
+        rows = ["".join(digit[cells[(x, y)]] if (x, y) in cells else "." for x in range(1, N + 1)) for y in range(1, N + 1)]
         designs.append({
             "id": index,
             "name": name,

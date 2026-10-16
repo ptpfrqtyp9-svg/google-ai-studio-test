@@ -191,166 +191,101 @@ public struct ContentView: View {
 private struct ColorByNumberView: View {
     @ObservedObject var state: TracingAppState
     let openLibrary: () -> Void
+    @State private var designIndex = 0
     @State private var selectedNumber = 1
     @State private var filledCells: [Int: Int] = [:]
-    @State private var selectedPicture: VectorShapeType = .star
     @State private var isGridVisible = true
     @State private var isHintVisible = false
-    private let colors: [Color] = [Color(red: 0.16, green: 0.70, blue: 0.91), Color(red: 1.0, green: 0.79, blue: 0.15), Color(red: 0.18, green: 0.18, blue: 0.21)]
-
-    // Every shape owns a hand-built half pattern: the left side plus the center column.
-    // The right side is mirrored in code, so every board is perfectly symmetrical.
-    // Digits are color numbers and "." is an empty cell.
-    private static func halfPattern(for shape: VectorShapeType) -> [String] {
-        switch shape {
-        case .star: return [".....1", "....12", "....22", "111222", ".11222", "..1232", "..1222", "..1.22", ".11..2", ".1....", "1....."]
-        case .heart: return ["..11..", ".12221", "122222", "122222", "122222", ".12222", "..1222", "...122", "....12", ".....1", "......"]
-        case .flower: return ["....11", "...111", ".11.22", "11.222", "..2233", "..2333", "..2233", "11.222", ".11.22", "...111", "....11"]
-        case .rocket: return [".....1", "....11", "...122", "...122", "..1222", "..1232", "..1222", ".11222", "11.222", "1..333", "....33"]
-        case .planet: return ["......", "......", "...111", "..1222", ".12222", "333333", ".12222", "..1222", "...111", "......", "......"]
-        case .astronaut: return ["......", "...111", "..1111", ".11111", "112222", "123333", "123333", "112222", ".11111", "..1111", "..1111"]
-        case .panda: return ["33....", "331111", ".11111", "111111", "113311", "113311", "111113", "111111", ".11111", "..1111", "......"]
-        case .dolphin: return ["......", "....11", "...111", "..1222", ".12222", "123222", ".12222", "..1222", "...111", "....11", "......"]
-        case .lion: return ["..2222", ".22222", "221111", "211111", "211311", "211111", "211113", "221111", ".22222", "..2222", "......"]
-        case .bird: return ["......", "....11", "...111", "..1131", "..1112", ".11111", "111111", "111111", ".11111", "..1111", "..2.2."]
-        case .cat: return [".1....", ".11...", ".11111", ".11111", "113111", "111111", "111112", ".11111", "..1111", "......", "......"]
-        case .butterfly: return ["1....3", ".1...3", "111113", "122223", "122223", "112223", "122223", "122223", "111113", ".1...3", "1....3"]
-        case .bonsai: return ["...222", "..2222", ".22222", "222222", ".22222", "....33", ".....3", ".....3", "...333", "111111", ".11111"]
-        case .crystal: return [".....1", "....12", "...122", "..1222", ".12222", "122233", ".12222", "..1222", "...122", "....12", ".....1"]
-        case .sailboat: return [".....3", "....23", "...223", "..2223", ".22223", "222223", ".....3", "111111", ".11111", "..1111", "......"]
-        case .airplane: return [".....1", "....12", "....22", "1.1222", "112222", "122222", "1.1222", "...122", "....22", "...111", "...1.1"]
-        case .car: return ["......", "......", "...111", "..1222", ".12222", "111111", "122222", "122222", "133111", ".33...", "......"]
-        case .strawberry: return ["...333", "....33", ".11111", "112111", "111121", "112111", ".11121", "..1111", "...111", ".....1", "......"]
-        case .orange: return [".....3", "...111", ".11111", "111111", "112222", "122222", "112222", "111111", ".11111", "..1111", "......"]
-        case .watermelon: return ["......", "......", "111111", "122222", "122232", "122222", ".12222", "..1222", "...111", "......", "......"]
-        case .apple: return ["....3.", ".1111.", "111111", "111111", "112211", "111111", "111111", ".11111", ".11111", "..1111", "...111"]
-        case .marshmallow: return ["......", ".11111", "122222", "122322", "122222", "122222", "122222", "122222", "122222", ".11111", "......"]
-        case .mnms: return ["......", "...111", "..1111", ".11111", "112222", "122233", "112222", ".11111", "..1111", "...111", "......"]
-        case .lollipop: return ["..1111", ".11111", "112222", "122333", "112222", ".11111", "..1111", ".....3", ".....3", ".....3", ".....3"]
-        case .candy: return ["......", "......", "1..222", "11.222", "112222", "112233", "112222", "11.222", "1..222", "......", "......"]
-        }
-    }
-
-    private static func mirroredGrid(for shape: VectorShapeType) -> [[Int?]] {
-        halfPattern(for: shape).map { row in
-            let left: [Int?] = row.map { Int(String($0)) }
-            return left + Array(left.dropLast().reversed())
-        }
-    }
-
-    @State private var grid: [[Int?]] = ColorByNumberView.mirroredGrid(for: .star)
     @State private var isCelebrating = false
 
-    private var flattenedGrid: [Int?] { grid.flatMap { $0 } }
-    private var gridColumns: [GridItem] {
-        Array(repeating: GridItem(.flexible(), spacing: 4), count: 11)
+    private static let columnCount = ColorByNumberDesign.size
+
+    private var design: ColorByNumberDesign {
+        let all = ColorByNumberLibrary.all
+        return all[designIndex % max(all.count, 1)]
     }
+
+    private var colors: [Color] {
+        design.palette.map { hex in
+            Color(
+                red: Double((hex >> 16) & 0xFF) / 255,
+                green: Double((hex >> 8) & 0xFF) / 255,
+                blue: Double(hex & 0xFF) / 255
+            )
+        }
+    }
+
+    private var cells: [Int?] { design.cells }
+    private var gridColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 3), count: Self.columnCount)
+    }
+
+    private var totalCount: Int { cells.compactMap { $0 }.count }
 
     private var filledCount: Int {
-        flattenedGrid.enumerated().filter { index, value in
+        cells.enumerated().filter { index, value in
             value != nil && filledCells[index] == value
         }.count
-    }
-
-    private var totalCount: Int {
-        flattenedGrid.filter { $0 != nil }.count
     }
 
     private var progressPercent: Int {
         totalCount == 0 ? 0 : Int((Double(filledCount) / Double(totalCount) * 100).rounded())
     }
 
-    private func selectPicture(_ shape: VectorShapeType) {
-        selectedPicture = shape
-        grid = ColorByNumberView.mirroredGrid(for: shape)
+    private func startDesign(at index: Int) {
+        let count = max(ColorByNumberLibrary.all.count, 1)
+        designIndex = ((index % count) + count) % count
         selectedNumber = 1
         filledCells.removeAll()
         isHintVisible = false
         isCelebrating = false
-        state.setVectorTarget(shape)
     }
 
     private func goToNextPicture() {
-        let all = VectorShapeType.allCases
-        guard let currentIndex = all.firstIndex(of: selectedPicture), !all.isEmpty else { return }
-        selectPicture(all[(currentIndex + 1) % all.count])
+        startDesign(at: designIndex + 1)
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Color(red: 0.98, green: 0.97, blue: 0.94).ignoresSafeArea()
-                DottedPaperBackground()
-                VStack(spacing: 14) {
-                    HStack {
-                        Button(action: openLibrary) { Label("Back to Free Draw", systemImage: "chevron.left") }
-                        Spacer()
-                        VStack(spacing: 3) {
-                            Text(selectedPicture.rawValue).font(.system(size: 22, weight: .black, design: .rounded))
-                            Text("\(selectedPicture.category.rawValue) • \(progressPercent)% Done").font(.system(size: 13, weight: .bold)).foregroundColor(.cyan)
-                        }
-                        Spacer()
-                        Button(action: {
-                            filledCells.removeAll()
-                            selectedNumber = 1
-                            isCelebrating = false
-                        }) { Label("Clear", systemImage: "arrow.counterclockwise") }
+        ZStack {
+            Color(red: 0.98, green: 0.97, blue: 0.94).ignoresSafeArea()
+            DottedPaperBackground()
+            VStack(spacing: 14) {
+                HStack {
+                    Button(action: openLibrary) { Label("Back to Free Draw", systemImage: "chevron.left") }
+                    Spacer()
+                    VStack(spacing: 3) {
+                        Text(design.name).font(.system(size: 22, weight: .black, design: .rounded))
+                        Text("\(design.category) \u{2022} \(progressPercent)% Done")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.cyan)
+                        Text("Picture \(designIndex + 1) of \(ColorByNumberLibrary.all.count)")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundColor(studioInk.opacity(0.5))
                     }
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundColor(studioInk.opacity(0.74))
-                    .padding(.horizontal, 28)
-                    .padding(.top, 54)
-
-                    HStack(alignment: .center, spacing: 28) {
-                        board
-                            .frame(maxWidth: .infinity, alignment: .center)
-
-                        colorNumberSidebar
-                            .frame(width: 220)
-                    }
-                    .frame(maxWidth: 980, maxHeight: .infinity, alignment: .center)
-                    .padding(.horizontal, 24)
-                    Spacer(minLength: 10)
+                    Spacer()
+                    Button(action: {
+                        filledCells.removeAll()
+                        selectedNumber = 1
+                        isCelebrating = false
+                    }) { Label("Clear", systemImage: "arrow.counterclockwise") }
                 }
-            }
-            .onChange(of: state.referenceTarget) { _, target in
-                if case .vector(let shape) = target, shape != selectedPicture {
-                    selectPicture(shape)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundColor(studioInk.opacity(0.74))
+                .padding(.horizontal, 28)
+                .padding(.top, 54)
+
+                HStack(alignment: .center, spacing: 28) {
+                    board
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    colorNumberSidebar
+                        .frame(width: 220)
                 }
+                .frame(maxWidth: 980, maxHeight: .infinity, alignment: .center)
+                .padding(.horizontal, 24)
+                Spacer(minLength: 10)
             }
         }
-    }
-
-    private var picturePicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("PICK A PICTURE")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundColor(studioInk)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(VectorShapeType.allCases, id: \.self) { shape in
-                        Button {
-                            selectPicture(shape)
-                        } label: {
-                            VStack(spacing: 4) {
-                                VectorRendererView(shapeType: shape, strokeColor: colors[0], lineWidth: 2)
-                                    .frame(width: 52, height: 42)
-                                Text(shape.rawValue)
-                                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                                    .lineLimit(1)
-                            }
-                            .foregroundColor(studioInk)
-                            .padding(6)
-                            .background(selectedPicture == shape ? Color.cyan.opacity(0.18) : Color.white.opacity(0.9))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(selectedPicture == shape ? .cyan : .clear, lineWidth: 2))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 12)
     }
 
     private var guidePanel: some View {
@@ -358,29 +293,12 @@ private struct ColorByNumberView: View {
             Text("PICTURE GUIDE").font(.system(size: 13, weight: .black, design: .rounded)).foregroundColor(Color(red: 0.25, green: 0.15, blue: 0.08))
             ZStack {
                 RoundedRectangle(cornerRadius: 12).fill(.white)
-                VectorRendererView(shapeType: selectedPicture, strokeColor: colors[0], lineWidth: 3)
-                    .padding(22)
-                VStack {
-                    HStack {
-                        guideBadge(1, color: colors[0])
-                        Spacer()
-                        guideBadge(2, color: colors[1])
-                    }
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        guideBadge(3, color: colors[2])
-                    }
-                }
-                .padding(10)
+                DesignPreview(design: design)
+                    .padding(14)
             }
-            .frame(width: 190, height: 150)
+            .frame(width: 190, height: 190)
         }
         .padding(14).background(Color(red: 0.72, green: 0.51, blue: 0.31)).clipShape(RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 5))
-    }
-
-    private func guideBadge(_ number: Int, color: Color) -> some View {
-        Text("\(number)").font(.system(size: 12, weight: .black, design: .rounded)).foregroundColor(.white).frame(width: 26, height: 26).background(color).clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2))
     }
 
     private var colorNumberSidebar: some View {
@@ -416,12 +334,13 @@ private struct ColorByNumberView: View {
                 .font(.system(size: 11, weight: .black, design: .rounded))
                 .foregroundColor(studioInk.opacity(0.7))
             HStack(spacing: 8) {
-                ForEach(1...3, id: \.self) { number in
+                ForEach(Array(colors.enumerated()), id: \.offset) { offset, color in
+                    let number = offset + 1
                     Circle()
-                        .fill(number < selectedNumber ? colors[number - 1] : (number == selectedNumber ? colors[number - 1] : Color.gray.opacity(0.25)))
+                        .fill(number <= selectedNumber ? color : Color.gray.opacity(0.25))
                         .frame(width: 34, height: 34)
                         .overlay {
-                            Text(number < selectedNumber ? "✓" : "\(number)")
+                            Text(number < selectedNumber ? "\u{2713}" : "\(number)")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
                                 .foregroundColor(number <= selectedNumber ? .white : studioInk.opacity(0.45))
                         }
@@ -431,38 +350,36 @@ private struct ColorByNumberView: View {
         .padding(.vertical, 4)
     }
 
-    private var numberPicker: some View {
-        HStack(spacing: 10) {
-            ForEach(1...3, id: \.self) { number in
-                Button { selectedNumber = number } label: {
-                    Text("\(number)").font(.system(size: 18, weight: .black, design: .rounded)).foregroundColor(.white).frame(width: 58, height: 58).background(colors[number - 1]).clipShape(Circle()).overlay(Circle().stroke(selectedNumber == number ? Color.green : .clear, lineWidth: 6))
-                }.buttonStyle(.plain)
-            }
-        }.padding(10).background(.white).clipShape(Capsule()).shadow(color: .black.opacity(0.12), radius: 10, y: 5)
-    }
-
     private var board: some View {
-        LazyVGrid(columns: gridColumns, spacing: 4) {
-            ForEach(Array(flattenedGrid.indices), id: \.self) { index in
+        LazyVGrid(columns: gridColumns, spacing: 3) {
+            ForEach(0..<cells.count, id: \.self) { index in
                 numberCell(at: index)
             }
         }
-        .padding(18)
+        .padding(16)
         .background(Color(red: 0.72, green: 0.51, blue: 0.31))
         .clipShape(RoundedRectangle(cornerRadius: 26))
         .overlay {
             RoundedRectangle(cornerRadius: 26)
                 .stroke(Color(red: 0.43, green: 0.25, blue: 0.10), lineWidth: 7)
         }
-        .frame(maxWidth: 650)
+        .frame(maxWidth: 560)
     }
 
     private func numberCell(at index: Int) -> some View {
-        let value = flattenedGrid[index]
+        let value = cells[index]
+        let palette = colors
         let isFilled = value.map { filledCells[index] == $0 } ?? false
         let isHinted = isHintVisible && value == selectedNumber && !isFilled
-        let fillColor = filledCells[index].map { colors[$0 - 1] } ?? Color(red: 0.97, green: 0.98, blue: 0.99)
-        let borderColor = isHinted ? colors[selectedNumber - 1] : (isGridVisible ? Color.gray.opacity(0.18) : .clear)
+        let fillColor: Color = {
+            if let filled = filledCells[index], filled >= 1, filled <= palette.count { return palette[filled - 1] }
+            return value == nil ? Color.white.opacity(0.35) : Color(red: 0.97, green: 0.98, blue: 0.99)
+        }()
+        let hintColor: Color = {
+            if selectedNumber >= 1, selectedNumber <= palette.count { return palette[selectedNumber - 1] }
+            return .orange
+        }()
+        let borderColor = isHinted ? hintColor : (isGridVisible && value != nil ? Color.gray.opacity(0.22) : .clear)
         let borderWidth: CGFloat = isHinted ? 3 : 1
 
         return Button {
@@ -470,45 +387,40 @@ private struct ColorByNumberView: View {
             filledCells[index] = value
             advanceAfterCompleting(number: value)
         } label: {
-            Group {
-                if let value {
-                    Text(isFilled ? "" : "\(value)")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+            ZStack {
+                RoundedRectangle(cornerRadius: 5).fill(fillColor)
+                RoundedRectangle(cornerRadius: 5).stroke(borderColor, lineWidth: borderWidth)
+                if let value, !isFilled {
+                    Text("\(value)")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(studioInk)
-                } else {
-                    Color.clear
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 44)
             .aspectRatio(1, contentMode: .fit)
-            .background(fillColor)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-            .overlay {
-                RoundedRectangle(cornerRadius: 5)
-                    .stroke(borderColor, lineWidth: borderWidth)
-            }
         }
         .buttonStyle(.plain)
+        .disabled(value == nil)
     }
 
     private func advanceAfterCompleting(number: Int) {
         func hasUnfilledCells(for candidate: Int) -> Bool {
-            flattenedGrid.enumerated().contains { index, value in
+            cells.enumerated().contains { index, value in
                 value == candidate && filledCells[index] != candidate
             }
         }
         guard !hasUnfilledCells(for: number) else { return }
         isHintVisible = false
 
-        if let nextNumber = [1, 2, 3].first(where: { hasUnfilledCells(for: $0) }) {
+        let paletteNumbers = Array(1...max(design.palette.count, 1))
+        if let nextNumber = paletteNumbers.first(where: { hasUnfilledCells(for: $0) }) {
             selectedNumber = nextNumber
             return
         }
 
         isCelebrating = true
-        let finishedPicture = selectedPicture
+        let finishedIndex = designIndex
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            guard isCelebrating, selectedPicture == finishedPicture else { return }
+            guard isCelebrating, designIndex == finishedIndex else { return }
             goToNextPicture()
         }
     }
@@ -530,6 +442,32 @@ private struct ColorByNumberView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)
+    }
+}
+
+private struct DesignPreview: View {
+    let design: ColorByNumberDesign
+
+    var body: some View {
+        Canvas { context, size in
+            let side = min(size.width, size.height)
+            let cell = side / CGFloat(ColorByNumberDesign.size)
+            let originX = (size.width - side) / 2
+            let originY = (size.height - side) / 2
+            for (index, value) in design.cells.enumerated() {
+                guard let value, value >= 1, value <= design.palette.count else { continue }
+                let hex = design.palette[value - 1]
+                let color = Color(
+                    red: Double((hex >> 16) & 0xFF) / 255,
+                    green: Double((hex >> 8) & 0xFF) / 255,
+                    blue: Double(hex & 0xFF) / 255
+                )
+                let column = index % ColorByNumberDesign.size
+                let row = index / ColorByNumberDesign.size
+                let rect = CGRect(x: originX + CGFloat(column) * cell, y: originY + CGFloat(row) * cell, width: cell, height: cell)
+                context.fill(Path(rect.insetBy(dx: 0.3, dy: 0.3)), with: .color(color))
+            }
+        }
     }
 }
 
