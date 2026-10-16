@@ -198,45 +198,82 @@ private struct ColorByNumberView: View {
     @State private var isHintVisible = false
     private let colors: [Color] = [Color(red: 0.16, green: 0.70, blue: 0.91), Color(red: 1.0, green: 0.79, blue: 0.15), Color(red: 0.18, green: 0.18, blue: 0.21)]
 
-    // Every picture owns its own number map. Keeping the map derived from the selection
-    // prevents the board from staying on the default picture after a new choice.
-    private var grid: [[Int?]] {
-        switch selectedPicture.category {
-        case .animals: return [
-            [nil, nil, 1, 1, nil, nil, 1, 1, nil, nil, nil], [nil, 1, 2, 2, 1, nil, 1, 2, 2, 1, nil],
-            [1, 2, 3, 2, 2, 1, 1, 2, 3, 2, 1], [1, 2, 2, 2, 2, 1, 1, 2, 2, 2, 1],
-            [1, 2, 2, 3, 2, 1, 1, 2, 3, 2, 1], [nil, 1, 2, 2, 1, nil, 1, 2, 2, 1, nil],
-            [nil, nil, 1, 1, nil, nil, 1, 1, nil, nil, nil], [nil, 1, 1, 2, 2, 2, 2, 2, 1, 1, nil],
-            [nil, 1, 2, 2, 2, 2, 2, 2, 2, 1, nil], [nil, nil, 1, 1, 1, 1, 1, 1, 1, nil, nil]
-        ]
-        case .vehicles: return [
-            [nil, nil, nil, nil, 1, 1, 1, nil, nil, nil, nil], [nil, nil, nil, 1, 2, 2, 2, 1, nil, nil, nil],
-            [nil, nil, 1, 2, 2, 3, 2, 2, 1, nil, nil], [nil, 1, 2, 2, 2, 2, 2, 2, 2, 1, nil],
-            [1, 2, 2, 3, 2, 2, 2, 3, 2, 2, 1], [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [nil, 1, 1, nil, nil, nil, nil, 1, 1, nil, nil],
-            [nil, 1, 1, nil, nil, nil, nil, 1, 1, nil, nil], [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-        ]
-        default: return [
-            [nil, nil, nil, 1, 1, 1, nil, nil, 1, 1, nil], [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil],
-            [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil], [1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1],
-            [1, 1, 1, 2, 3, 2, 2, 3, 2, 1, 1], [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil],
-            [nil, 1, 1, 2, 2, 2, 2, 2, 2, 1, nil], [nil, nil, 1, 3, 3, 3, 3, 1, 1, nil, nil],
-            [nil, nil, nil, nil, 2, 2, 2, 2, nil, nil, nil], [nil, nil, nil, nil, nil, 3, 3, nil, nil, nil]
-        ]
+    // Every shape owns a hand-built half pattern: the left side plus the center column.
+    // The right side is mirrored in code, so every board is perfectly symmetrical.
+    // Digits are color numbers and "." is an empty cell.
+    private static func halfPattern(for shape: VectorShapeType) -> [String] {
+        switch shape {
+        case .star: return [".....1", "....12", "....22", "111222", ".11222", "..1232", "..1222", "..1.22", ".11..2", ".1....", "1....."]
+        case .heart: return ["..11..", ".12221", "122222", "122222", "122222", ".12222", "..1222", "...122", "....12", ".....1", "......"]
+        case .flower: return ["....11", "...111", ".11.22", "11.222", "..2233", "..2333", "..2233", "11.222", ".11.22", "...111", "....11"]
+        case .rocket: return [".....1", "....11", "...122", "...122", "..1222", "..1232", "..1222", ".11222", "11.222", "1..333", "....33"]
+        case .planet: return ["......", "......", "...111", "..1222", ".12222", "333333", ".12222", "..1222", "...111", "......", "......"]
+        case .astronaut: return ["......", "...111", "..1111", ".11111", "112222", "123333", "123333", "112222", ".11111", "..1111", "..1111"]
+        case .panda: return ["33....", "331111", ".11111", "111111", "113311", "113311", "111113", "111111", ".11111", "..1111", "......"]
+        case .dolphin: return ["......", "....11", "...111", "..1222", ".12222", "123222", ".12222", "..1222", "...111", "....11", "......"]
+        case .lion: return ["..2222", ".22222", "221111", "211111", "211311", "211111", "211113", "221111", ".22222", "..2222", "......"]
+        case .bird: return ["......", "....11", "...111", "..1131", "..1112", ".11111", "111111", "111111", ".11111", "..1111", "..2.2."]
+        case .cat: return [".1....", ".11...", ".11111", ".11111", "113111", "111111", "111112", ".11111", "..1111", "......", "......"]
+        case .butterfly: return ["1....3", ".1...3", "111113", "122223", "122223", "112223", "122223", "122223", "111113", ".1...3", "1....3"]
+        case .bonsai: return ["...222", "..2222", ".22222", "222222", ".22222", "....33", ".....3", ".....3", "...333", "111111", ".11111"]
+        case .crystal: return [".....1", "....12", "...122", "..1222", ".12222", "122233", ".12222", "..1222", "...122", "....12", ".....1"]
+        case .sailboat: return [".....3", "....23", "...223", "..2223", ".22223", "222223", ".....3", "111111", ".11111", "..1111", "......"]
+        case .airplane: return [".....1", "....12", "....22", "1.1222", "112222", "122222", "1.1222", "...122", "....22", "...111", "...1.1"]
+        case .car: return ["......", "......", "...111", "..1222", ".12222", "111111", "122222", "122222", "133111", ".33...", "......"]
+        case .strawberry: return ["...333", "....33", ".11111", "112111", "111121", "112111", ".11121", "..1111", "...111", ".....1", "......"]
+        case .orange: return [".....3", "...111", ".11111", "111111", "112222", "122222", "112222", "111111", ".11111", "..1111", "......"]
+        case .watermelon: return ["......", "......", "111111", "122222", "122232", "122222", ".12222", "..1222", "...111", "......", "......"]
+        case .apple: return ["....3.", ".1111.", "111111", "111111", "112211", "111111", "111111", ".11111", ".11111", "..1111", "...111"]
+        case .marshmallow: return ["......", ".11111", "122222", "122322", "122222", "122222", "122222", "122222", "122222", ".11111", "......"]
+        case .mnms: return ["......", "...111", "..1111", ".11111", "112222", "122233", "112222", ".11111", "..1111", "...111", "......"]
+        case .lollipop: return ["..1111", ".11111", "112222", "122333", "112222", ".11111", "..1111", ".....3", ".....3", ".....3", ".....3"]
+        case .candy: return ["......", "......", "1..222", "11.222", "112222", "112233", "112222", "11.222", "1..222", "......", "......"]
         }
     }
+
+    private static func mirroredGrid(for shape: VectorShapeType) -> [[Int?]] {
+        halfPattern(for: shape).map { row in
+            let left: [Int?] = row.map { Int(String($0)) }
+            return left + Array(left.dropLast().reversed())
+        }
+    }
+
+    @State private var grid: [[Int?]] = ColorByNumberView.mirroredGrid(for: .star)
+    @State private var isCelebrating = false
 
     private var flattenedGrid: [Int?] { grid.flatMap { $0 } }
     private var gridColumns: [GridItem] {
         Array(repeating: GridItem(.flexible(), spacing: 4), count: 11)
     }
 
+    private var filledCount: Int {
+        flattenedGrid.enumerated().filter { index, value in
+            value != nil && filledCells[index] == value
+        }.count
+    }
+
+    private var totalCount: Int {
+        flattenedGrid.filter { $0 != nil }.count
+    }
+
+    private var progressPercent: Int {
+        totalCount == 0 ? 0 : Int((Double(filledCount) / Double(totalCount) * 100).rounded())
+    }
+
     private func selectPicture(_ shape: VectorShapeType) {
         selectedPicture = shape
+        grid = ColorByNumberView.mirroredGrid(for: shape)
         selectedNumber = 1
         filledCells.removeAll()
         isHintVisible = false
+        isCelebrating = false
         state.setVectorTarget(shape)
+    }
+
+    private func goToNextPicture() {
+        let all = VectorShapeType.allCases
+        guard let currentIndex = all.firstIndex(of: selectedPicture), !all.isEmpty else { return }
+        selectPicture(all[(currentIndex + 1) % all.count])
     }
 
     var body: some View {
@@ -249,11 +286,15 @@ private struct ColorByNumberView: View {
                         Button(action: openLibrary) { Label("Back to Free Draw", systemImage: "chevron.left") }
                         Spacer()
                         VStack(spacing: 3) {
-                            Text("Buzzy Bee").font(.system(size: 22, weight: .black, design: .rounded))
-                            Text("Animals & Nature • 5% Done").font(.system(size: 13, weight: .bold)).foregroundColor(.cyan)
+                            Text(selectedPicture.rawValue).font(.system(size: 22, weight: .black, design: .rounded))
+                            Text("\(selectedPicture.category.rawValue) • \(progressPercent)% Done").font(.system(size: 13, weight: .bold)).foregroundColor(.cyan)
                         }
                         Spacer()
-                        Button(action: { filledCells.removeAll() }) { Label("Clear", systemImage: "arrow.counterclockwise") }
+                        Button(action: {
+                            filledCells.removeAll()
+                            selectedNumber = 1
+                            isCelebrating = false
+                        }) { Label("Clear", systemImage: "arrow.counterclockwise") }
                     }
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundColor(studioInk.opacity(0.74))
@@ -354,6 +395,12 @@ private struct ColorByNumberView: View {
                     revealHint()
                 }
             }
+            if isCelebrating {
+                Text("Great job! Next picture coming up...")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .foregroundColor(.green)
+                    .multilineTextAlignment(.center)
+            }
             if isHintVisible {
                 Text("Color the highlighted number. The next color unlocks automatically.")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -419,7 +466,7 @@ private struct ColorByNumberView: View {
         let borderWidth: CGFloat = isHinted ? 3 : 1
 
         return Button {
-            guard let value, value == selectedNumber else { return }
+            guard !isCelebrating, let value, value == selectedNumber else { return }
             filledCells[index] = value
             advanceAfterCompleting(number: value)
         } label: {
@@ -432,7 +479,8 @@ private struct ColorByNumberView: View {
                     Color.clear
                 }
             }
-            .frame(minWidth: 44, minHeight: 44)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .aspectRatio(1, contentMode: .fit)
             .background(fillColor)
             .clipShape(RoundedRectangle(cornerRadius: 5))
             .overlay {
@@ -444,22 +492,24 @@ private struct ColorByNumberView: View {
     }
 
     private func advanceAfterCompleting(number: Int) {
-        let cellsForNumber = flattenedGrid.enumerated().compactMap { index, value in
-            value == number ? index : nil
-        }
-        let isComplete = !cellsForNumber.isEmpty && cellsForNumber.allSatisfy { filledCells[$0] == number }
-        guard isComplete else { return }
-
-        let remainingNumbers = (number + 1...3).filter { candidate in
+        func hasUnfilledCells(for candidate: Int) -> Bool {
             flattenedGrid.enumerated().contains { index, value in
                 value == candidate && filledCells[index] != candidate
             }
         }
-        if let nextNumber = remainingNumbers.first {
+        guard !hasUnfilledCells(for: number) else { return }
+        isHintVisible = false
+
+        if let nextNumber = [1, 2, 3].first(where: { hasUnfilledCells(for: $0) }) {
             selectedNumber = nextNumber
-            isHintVisible = false
-        } else if number == 3 {
-            isHintVisible = false
+            return
+        }
+
+        isCelebrating = true
+        let finishedPicture = selectedPicture
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            guard isCelebrating, selectedPicture == finishedPicture else { return }
+            goToNextPicture()
         }
     }
 
